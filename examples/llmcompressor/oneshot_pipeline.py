@@ -21,7 +21,12 @@ def run_oneshot_datafree(
     tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
 
     model = oneshot(model=model, recipe=recipe, tokenizer=tokenizer)
-    model.save_pretrained(output_model.path, skip_sparsity_compression_stats=True)
+    model.save_pretrained(
+        output_model.path,
+        # TODO for llm-compressor<=0.5.0
+        skip_compression_stats=True,
+        skip_sparsity_compression_stats=True,
+    )
     tokenizer.save_pretrained(output_model.path)
 
     return
@@ -87,15 +92,21 @@ def run_oneshot_calibrated(
         max_seq_length=max_sequence_length,
         num_calibration_samples=num_calibration_samples,
     )
-    model.save_pretrained(output_model.path, skip_sparsity_compression_stats=True)
+    model.save_pretrained(
+        output_model.path,
+        # TODO for llm-compressor<=0.5.0
+        skip_compression_stats=True,
+        skip_sparsity_compression_stats=True,
+    )
     tokenizer.save_pretrained(output_model.path)
 
     return
 
 
 @kfp.dsl.component(
-    base_image="quay.io/opendatahub/llmcompressor-pipeline-runtime:main",
-    packages_to_install=["lm_eval~=0.4.8", "vllm~=0.8.4"],
+    # TODO update vllm image tag with 0.8.4
+    base_image="quay.io/vllm/vllm:0.8.3.0rc0",
+    packages_to_install=["lm_eval~=0.4.8"],
 )
 def eval_model(
     input_model: dsl.Input[dsl.Artifact],
@@ -220,7 +231,7 @@ def pipeline(
             .set_cpu_request("2000m")
             .set_memory_request("4G")
             .set_cpu_limit("3000m")
-            .set_memory_limit("10G")
+            .set_memory_limit("12G")
         )
         kubernetes.use_secret_as_env(
             oneshot_task,
