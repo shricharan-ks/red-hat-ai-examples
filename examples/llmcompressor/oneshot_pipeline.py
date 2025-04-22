@@ -21,7 +21,7 @@ def run_oneshot_datafree(
     tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
 
     model = oneshot(model=model, recipe=recipe, tokenizer=tokenizer)
-    model.save_pretrained(output_model.path)
+    model.save_pretrained(output_model.path, skip_sparsity_compression_stats=True)
     tokenizer.save_pretrained(output_model.path)
 
     return
@@ -87,7 +87,7 @@ def run_oneshot_calibrated(
         max_seq_length=max_sequence_length,
         num_calibration_samples=num_calibration_samples,
     )
-    model.save_pretrained(output_model.path)
+    model.save_pretrained(output_model.path, skip_sparsity_compression_stats=True)
     tokenizer.save_pretrained(output_model.path)
 
     return
@@ -134,8 +134,9 @@ def eval_model(
     " to a given model, followed by an eval step",
 )
 def pipeline(
-    model_id: str = "TinyLlama/TinyLlama-1.1B-Chat-v1.0",  # "meta-llama/Llama-3.1-8B-Instruct",
+    model_id: str = "TinyLlama/TinyLlama-1.1B-Chat-v1.0",  # "meta-llama/Llama-3.2-3B-Instruct",
     dataset_id: str = "HuggingFaceH4/ultrachat_200k",
+    dataset_split: str = "train_sft",
 ):
     datafree_recipes: List[str] = [
         # TODO cannot pass in as type list annotation,
@@ -155,10 +156,10 @@ def pipeline(
     for recipe in datafree_recipes:
         oneshot_task = (
             run_oneshot_datafree(model_id=model_id, recipe=recipe)
-            .set_cpu_request("3000m")
+            .set_cpu_request("2000m")
             .set_memory_request("4G")
-            .set_cpu_limit("4000m")
-            .set_memory_limit("5G")
+            .set_cpu_limit("3000m")
+            .set_memory_limit("10G")
         )
         kubernetes.use_secret_as_env(
             oneshot_task,
@@ -173,10 +174,10 @@ def pipeline(
             )
             .set_accelerator_type("nvidia.com/gpu")
             .set_accelerator_limit("1")
-            .set_cpu_request("3000m")
+            .set_cpu_request("2000m")
             .set_memory_request("4G")
-            .set_cpu_limit("4000m")
-            .set_memory_limit("5G")
+            .set_cpu_limit("3000m")
+            .set_memory_limit("10G")
         )
         kubernetes.add_toleration(
             eval_task,
@@ -212,14 +213,14 @@ def pipeline(
                 model_id=model_id,
                 recipe=recipe,
                 dataset_id=dataset_id,
-                dataset_split="train_sft",
+                dataset_split=dataset_split,
             )
             .set_accelerator_type("nvidia.com/gpu")
             .set_accelerator_limit("1")
-            .set_cpu_request("3000m")
+            .set_cpu_request("2000m")
             .set_memory_request("4G")
-            .set_cpu_limit("4000m")
-            .set_memory_limit("5G")
+            .set_cpu_limit("3000m")
+            .set_memory_limit("10G")
         )
         kubernetes.use_secret_as_env(
             oneshot_task,
@@ -240,10 +241,10 @@ def pipeline(
             )
             .set_accelerator_type("nvidia.com/gpu")
             .set_accelerator_limit("1")
-            .set_cpu_request("3000m")
+            .set_cpu_request("2000m")
             .set_memory_request("4G")
-            .set_cpu_limit("4000m")
-            .set_memory_limit("5G")
+            .set_cpu_limit("3000m")
+            .set_memory_limit("10G")
         )
         kubernetes.add_toleration(
             eval_task,
