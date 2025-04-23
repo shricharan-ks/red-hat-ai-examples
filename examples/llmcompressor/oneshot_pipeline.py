@@ -105,8 +105,10 @@ def run_oneshot_calibrated(
 
 @kfp.dsl.component(
     # TODO update vllm image tag with 0.8.4
-    base_image="quay.io/vllm/vllm:0.8.3.0rc0",
-    packages_to_install=["lm_eval~=0.4.8"],
+    # base_image="quay.io/vllm/vllm:0.8.3.0rc0",
+    # base_image="quay.io/opendatahub/vllm:fast-cuda",
+    base_image="quay.io/harshad16/pipeline-runtime:vllm",
+    packages_to_install=["lm_eval~=0.4.8"],  # "vllm~=0.8.4"
 )
 def eval_model(
     input_model: dsl.Input[dsl.Artifact],
@@ -199,14 +201,14 @@ def pipeline(
         )
 
     calibrated_recipes: List[str] = [
-        """
-        quant_stage:
-            quant_modifiers:
-                GPTQModifier:
-                    ignore: ["lm_head"]
-                    targets: ["Linear"]
-                    scheme: "W4A16"
-        """,
+        # """
+        # quant_stage:
+        #     quant_modifiers:
+        #         GPTQModifier:
+        #             ignore: ["lm_head"]
+        #             targets: ["Linear"]
+        #             scheme: "W4A16"
+        # """,
         # """
         # quant_stage:
         #     quant_modifiers:
