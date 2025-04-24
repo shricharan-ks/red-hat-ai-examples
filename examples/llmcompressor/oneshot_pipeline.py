@@ -212,16 +212,16 @@ def pipeline(
                     targets: ["Linear"]
                     scheme: "W4A16"
         """,
-        """
-        quant_stage:
-            quant_modifiers:
-                SmoothQuantModifier:
-                    smoothing_strength: 0.8
-                GPTQModifier:
-                    ignore: ["lm_head"]
-                    targets: ["Linear"]
-                    scheme: "W4A16"
-        """,
+        # """
+        # quant_stage:
+        #     quant_modifiers:
+        #         SmoothQuantModifier:
+        #             smoothing_strength: 0.8
+        #         GPTQModifier:
+        #             ignore: ["lm_head"]
+        #             targets: ["Linear"]
+        #             scheme: "W4A16"
+        # """,
     ]
     for recipe in calibrated_recipes:
         calibrated_task = (
@@ -234,9 +234,9 @@ def pipeline(
             .set_accelerator_type("nvidia.com/gpu")
             .set_accelerator_limit("1")
             .set_cpu_request("2000m")
-            .set_memory_request("4G")
+            .set_memory_request("12G")
             .set_cpu_limit("3000m")
-            .set_memory_limit("12G")
+            .set_memory_limit("24G")
         )
         kubernetes.use_secret_as_env(
             calibrated_task,

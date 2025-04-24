@@ -16,6 +16,9 @@ __pycache__/
 # VS Code
 .vscode
 
+# YAML generated from running example kfp.compile scripts
+examples/**/*.yaml
+
 # Distribution / packaging
 .Python
 build/
