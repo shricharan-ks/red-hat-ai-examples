@@ -5,6 +5,8 @@ from kfp import dsl, kubernetes
 
 
 @kfp.dsl.component(
+    # TODO llmcompressor 0.5.1 and image with vllm pre-installed
+    # NOTE: uses CUDA 12.4 https://github.com/vllm-project/vllm/issues/13608
     base_image="quay.io/opendatahub/llmcompressor-pipeline-runtime:main",
     packages_to_install=["llmcompressor~=0.5.0"],
 )
@@ -23,7 +25,7 @@ def run_oneshot_datafree(
     model = oneshot(model=model, recipe=recipe, tokenizer=tokenizer)
     model.save_pretrained(
         output_model.path,
-        # TODO for llm-compressor<=0.5.0
+        # TODO needed for llm-compressor<=0.5.0
         skip_compression_stats=True,
         skip_sparsity_compression_stats=True,
     )
@@ -33,6 +35,7 @@ def run_oneshot_datafree(
 
 
 @kfp.dsl.component(
+    # TODO llmcompressor 0.5.1 and image with vllm pre-installed
     base_image="quay.io/opendatahub/llmcompressor-pipeline-runtime:main",
     packages_to_install=["llmcompressor~=0.5.0"],
 )
@@ -104,26 +107,26 @@ def run_oneshot_calibrated(
 
 
 @kfp.dsl.component(
-    # TODO update vllm image tag with 0.8.4
-    # base_image="quay.io/vllm/vllm:0.8.3.0rc0",
-    # base_image="quay.io/opendatahub/vllm:fast-cuda",
-    base_image="quay.io/harshad16/pipeline-runtime:vllm",
+    # TODO llmcompressor 0.5.1 and image with vllm pre-installed (needs CUDA 12.4)
+    base_image="quay.io/harshad16/pipeline-runtime:vllm-patch1",
     packages_to_install=["lm_eval~=0.4.8"],  # "vllm~=0.8.4"
 )
 def eval_model(
     input_model: dsl.Input[dsl.Artifact],
     tasks: List[str],
-    # TODO can model be of type `Literal["hf", "vllm"]`?
+    # TODO can model typehint be `Literal["hf", "vllm"]`?
     model: str = "vllm",
     model_args: dict = {
         "add_bos_token": True,
         "dtype": "bfloat16",
         "device": "auto",
+        "max_model_len": 4096,
+        "gpu_memory_utilization": 0.8,
     },
     limit: Optional[int] = None,
     num_fewshot: int = 5,
     batch_size: Optional[int] = None,
-) -> Dict[str, Any]:
+) -> str:
     import lm_eval
     from lm_eval.utils import make_table
 
@@ -147,7 +150,7 @@ def eval_model(
     " to a given model, followed by an eval step",
 )
 def pipeline(
-    model_id: str = "TinyLlama/TinyLlama-1.1B-Chat-v1.0",  # "meta-llama/Llama-3.2-3B-Instruct",
+    model_id: str = "meta-llama/Llama-3.2-3B-Instruct",  # "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
     dataset_id: str = "HuggingFaceH4/ultrachat_200k",
     dataset_split: str = "train_sft",
 ):
@@ -183,7 +186,7 @@ def pipeline(
         eval_task = (
             eval_model(
                 input_model=oneshot_task.outputs["output_model"],  # noqa: F841
-                tasks=["wikitext", "gsm8k"],
+                tasks=["gsm8k"],
             )
             .set_accelerator_type("nvidia.com/gpu")
             .set_accelerator_limit("1")
@@ -196,29 +199,29 @@ def pipeline(
             eval_task,
             key="nvidia.com/gpu",
             operator="Equal",
-            value="Tesla-T4-SHARED",
+            value="NVIDIA-A10G-SHARED",
             effect="NoSchedule",
         )
 
     calibrated_recipes: List[str] = [
-        # """
-        # quant_stage:
-        #     quant_modifiers:
-        #         GPTQModifier:
-        #             ignore: ["lm_head"]
-        #             targets: ["Linear"]
-        #             scheme: "W4A16"
-        # """,
-        # """
-        # quant_stage:
-        #     quant_modifiers:
-        #         SmoothQuantModifier:
-        #             smoothing_strength: 0.8
-        #         GPTQModifier:
-        #             ignore: ["lm_head"]
-        #             targets: ["Linear"]
-        #             scheme: "W4A16"
-        # """,
+        """
+        quant_stage:
+            quant_modifiers:
+                GPTQModifier:
+                    ignore: ["lm_head"]
+                    targets: ["Linear"]
+                    scheme: "W4A16"
+        """,
+        """
+        quant_stage:
+            quant_modifiers:
+                SmoothQuantModifier:
+                    smoothing_strength: 0.8
+                GPTQModifier:
+                    ignore: ["lm_head"]
+                    targets: ["Linear"]
+                    scheme: "W4A16"
+        """,
     ]
     for recipe in calibrated_recipes:
         calibrated_task = (
@@ -236,7 +239,7 @@ def pipeline(
             .set_memory_limit("12G")
         )
         kubernetes.use_secret_as_env(
-            oneshot_task,
+            calibrated_task,
             secret_name="hf-hub-secret",
             secret_key_to_env={"HF_TOKEN": "HF_TOKEN"},
         )
@@ -244,13 +247,13 @@ def pipeline(
             calibrated_task,
             key="nvidia.com/gpu",
             operator="Equal",
-            value="Tesla-T4-SHARED",
+            value="NVIDIA-A10G-SHARED",
             effect="NoSchedule",
         )
         eval_task = (
             eval_model(
                 input_model=calibrated_task.outputs["output_model"],  # noqa: F841
-                tasks=["wikitext", "gsm8k"],
+                tasks=["gsm8k"],
             )
             .set_accelerator_type("nvidia.com/gpu")
             .set_accelerator_limit("1")
@@ -263,7 +266,7 @@ def pipeline(
             eval_task,
             key="nvidia.com/gpu",
             operator="Equal",
-            value="Tesla-T4-SHARED",
+            value="NVIDIA-A10G-SHARED",
             effect="NoSchedule",
         )
 
