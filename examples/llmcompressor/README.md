@@ -3,7 +3,7 @@
 The compression and optimization of pretrained, off-the-shelf large language models (LLMs) is essential for organizations to reduce the hardware and energy requirements of their AI applications. This set of examples will introduce RHOAI users (Machine Learning Engineers and Data Scientists) to model compression using two tools in the open-source VLLM project: 
 
 1. [`llm-compressor`](https://github.com/vllm-project/llm-compressor) to compress models.
-2. The [`vllm`](https://github.com/vllm-project/vllm) deployment engine to benchmark compressed models. 
+2. The [`vllm`](https://github.com/vllm-project/vllm) deployment engine to evaluate the performance of compressed models. 
 
 While research in model compression is continually evolving and growing increasingly complex, the examples require only a basic understanding of Python and the [HuggingFace software ecosystem](https://huggingface.co/docs/transformers/index). By the end, users should know how to run and compare the performance of different compression techniques, and how to customize to their own dataset or pretrained model.
 
@@ -20,7 +20,7 @@ Two pathways are provided:
 
 ## Prerequisites
 
-These examples assume the user has access to a Data Science Project on a Red Hat OpenShift AI cluster. Data Science Pipelines must be enabled in your project to run the pipeline. 
+These examples assume the user has access to a Data Science Project on a Red Hat OpenShift AI cluster. Data Science Pipelines must be enabled in your project to run the pipeline. Users must `pip install -r requirements.txt` in order to run `oneshot_pipeline.py`.
 
 ### Accessing HuggingFace Hub Models
 
@@ -58,7 +58,7 @@ Data-free compression flows can typically run in a short amount of time on CPU, 
 > [!NOTE]  
 > Certain features in `vllm` require higher compute capability -- https://docs.vllm.ai/en/stable/features/compatibility_matrix.html
 
-As a best practice, RHOAI clusters configure GPU nodes with [taints](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/) so that tasks that don't require GPUs are not generally deployed to them. The pipeline example assumes cluster nodes with A10 devices are also configured with a taint `NVIDIA-A10G-SHARED`. To ensure the task is deployed to that node, we add a toleration:
+As a best practice, RHOAI clusters configure GPU nodes with [taints](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/) so that tasks that don't require GPUs are not generally deployed to them. The pipeline example assumes cluster nodes with NVIDIA A10 devices are also configured with a taint `NVIDIA-A10G-SHARED`. To ensure the task is deployed to that node, we add a toleration:
 
 ```python
 kubernetes.add_toleration(
@@ -70,4 +70,4 @@ kubernetes.add_toleration(
 )
 ```
 
-Users may have to update this to match the taint configured by their cluster admin, or remove if the taint does not exist.
+Users may have to update this to match the taint configured by the cluster administrator, or remove if the taint does not exist.

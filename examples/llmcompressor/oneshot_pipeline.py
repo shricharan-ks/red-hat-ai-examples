@@ -155,11 +155,6 @@ def pipeline(
     dataset_split: str = "train_sft",
 ):
     datafree_recipes: List[str] = [
-        # TODO cannot pass in as type list annotation,
-        #  do we need a more concrete base type for this to work?
-        # QuantizationModifier(
-        #     targets="Linear", scheme="FP8_DYNAMIC", ignore=["lm_head"]
-        # ),
         """
         quant_stage:
             quant_modifiers:
