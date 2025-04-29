@@ -20,7 +20,7 @@ Two pathways are provided:
 
 ## Prerequisites
 
-These examples assume the user has access to a Data Science Project on a Red Hat OpenShift AI cluster. Data Science Pipelines must be enabled in your project to run the pipeline. Users must `pip install -r requirements.txt` in order to run `oneshot_pipeline.py`.
+These examples assume the user has access to a Data Science Project on a Red Hat OpenShift AI cluster. The [Data Science Pipelines feature](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/2.19/html/working_with_data_science_pipelines/index) must be enabled in your project to run the pipeline. Users must `pip install -r requirements.txt` in order to run `oneshot_pipeline.py`.
 
 ### Accessing HuggingFace Hub Models
 
@@ -53,7 +53,7 @@ kubernetes.use_secret_as_env(
 
 ### Using Accelerated Hardware
 
-Data-free compression flows can typically run in a short amount of time on CPU, but calibrated compression often require accelerated hardware. The examples demonstrate both, and the images are built to be compatible with NVIDIA GPUs with [compute capability](https://developer.nvidia.com/cuda-gpus) 7.0 or higher.
+Data-free compression flows can typically run in a short amount of time on CPU, but calibrated compression often requires accelerated hardware. The examples demonstrate both, and the images are built to be compatible with NVIDIA GPUs with [compute capability](https://developer.nvidia.com/cuda-gpus) 7.0 or higher.
 
 > [!NOTE]  
 > Certain features in `vllm` require higher compute capability -- https://docs.vllm.ai/en/stable/features/compatibility_matrix.html
