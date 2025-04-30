@@ -5,10 +5,8 @@ from kfp import dsl, kubernetes
 
 
 @kfp.dsl.component(
-    # TODO llmcompressor 0.5.1 and image with vllm pre-installed
-    # NOTE: uses CUDA 12.4 https://github.com/vllm-project/vllm/issues/13608
-    base_image="quay.io/opendatahub/llmcompressor-pipeline-runtime:main",
-    packages_to_install=["llmcompressor~=0.5.0"],
+    # TODO image with more general name
+    base_image="quay.io/harshad16/pipeline-runtime:vllm-patch2",
 )
 def run_oneshot_datafree(
     model_id: str, recipe: str, output_model: dsl.Output[dsl.Artifact]
@@ -23,21 +21,16 @@ def run_oneshot_datafree(
     tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
 
     model = oneshot(model=model, recipe=recipe, tokenizer=tokenizer)
-    model.save_pretrained(
-        output_model.path,
-        # TODO needed for llm-compressor<=0.5.0
-        skip_compression_stats=True,
-        skip_sparsity_compression_stats=True,
-    )
+
+    model.save_pretrained(output_model.path)
     tokenizer.save_pretrained(output_model.path)
 
     return
 
 
 @kfp.dsl.component(
-    # TODO llmcompressor 0.5.1 and image with vllm pre-installed
-    base_image="quay.io/opendatahub/llmcompressor-pipeline-runtime:main",
-    packages_to_install=["llmcompressor~=0.5.0"],
+    # TODO image with more general name
+    base_image="quay.io/harshad16/pipeline-runtime:vllm-patch2",
 )
 def run_oneshot_calibrated(
     model_id: str,
@@ -95,26 +88,20 @@ def run_oneshot_calibrated(
         max_seq_length=max_sequence_length,
         num_calibration_samples=num_calibration_samples,
     )
-    model.save_pretrained(
-        output_model.path,
-        # TODO for llm-compressor<=0.5.0
-        skip_compression_stats=True,
-        skip_sparsity_compression_stats=True,
-    )
+
+    model.save_pretrained(output_model.path)
     tokenizer.save_pretrained(output_model.path)
 
     return
 
 
 @kfp.dsl.component(
-    # TODO llmcompressor 0.5.1 and image with vllm pre-installed (needs CUDA 12.4)
-    base_image="quay.io/harshad16/pipeline-runtime:vllm-patch1",
-    packages_to_install=["lm_eval~=0.4.8"],  # "vllm~=0.8.4"
+    # TODO image with more general name
+    base_image="quay.io/harshad16/pipeline-runtime:vllm-patch2",
 )
 def eval_model(
     input_model: dsl.Input[dsl.Artifact],
     tasks: List[str],
-    # TODO can model typehint be `Literal["hf", "vllm"]`?
     model: str = "vllm",
     model_args: dict = {
         "add_bos_token": True,
@@ -150,7 +137,7 @@ def eval_model(
     " to a given model, followed by an eval step",
 )
 def pipeline(
-    model_id: str = "meta-llama/Llama-3.2-3B-Instruct",  # "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    model_id: str = "meta-llama/Llama-3.2-3B-Instruct",
     dataset_id: str = "HuggingFaceH4/ultrachat_200k",
     dataset_split: str = "train_sft",
 ):
