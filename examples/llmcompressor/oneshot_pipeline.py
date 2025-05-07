@@ -5,8 +5,7 @@ from kfp import dsl, kubernetes
 
 
 @kfp.dsl.component(
-    # TODO image with more general name
-    base_image="quay.io/harshad16/pipeline-runtime:vllm-patch2",
+    base_image="quay.io/opendatahub/llmcompressor-pipeline-runtime:main",
 )
 def run_oneshot_datafree(
     model_id: str, recipe: str, output_model: dsl.Output[dsl.Artifact]
@@ -29,8 +28,7 @@ def run_oneshot_datafree(
 
 
 @kfp.dsl.component(
-    # TODO image with more general name
-    base_image="quay.io/harshad16/pipeline-runtime:vllm-patch2",
+    base_image="quay.io/opendatahub/llmcompressor-pipeline-runtime:main",
 )
 def run_oneshot_calibrated(
     model_id: str,
@@ -96,8 +94,7 @@ def run_oneshot_calibrated(
 
 
 @kfp.dsl.component(
-    # TODO image with more general name
-    base_image="quay.io/harshad16/pipeline-runtime:vllm-patch2",
+    base_image="quay.io/opendatahub/llmcompressor-pipeline-runtime:main",
 )
 def eval_model(
     input_model: dsl.Input[dsl.Artifact],
@@ -193,17 +190,7 @@ def pipeline(
                     ignore: ["lm_head"]
                     targets: ["Linear"]
                     scheme: "W4A16"
-        """,
-        # """
-        # quant_stage:
-        #     quant_modifiers:
-        #         SmoothQuantModifier:
-        #             smoothing_strength: 0.8
-        #         GPTQModifier:
-        #             ignore: ["lm_head"]
-        #             targets: ["Linear"]
-        #             scheme: "W4A16"
-        # """,
+        """
     ]
     for recipe in calibrated_recipes:
         calibrated_task = (
