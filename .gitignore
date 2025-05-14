@@ -16,6 +16,9 @@ __pycache__/
 # VS Code
 .vscode
 
+# YAML generated from running kfp.compile scripts in examples/
+examples/llmcompressor/*.yaml
+
 # Distribution / packaging
 .Python
 build/
