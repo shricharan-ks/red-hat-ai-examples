@@ -3,9 +3,24 @@ name = "ai-tools"
 version = "0.1.0"
 description = "Tools and utilities required to run the examples"
 readme = "README.md"
-requires-python = ">=3.12"
-dependencies = []
+requires-python = ">=3.10"
+dependencies = [
+    "datasets>=4.1.1",
+    "docling>=2.53.0",
+    "docling-sdg>=0.4.0",
+    "pathlib>=1.0.1",
+    "transformers>=4.56.1",
+]
 
 [build-system]
 requires = ["uv_build>=0.8.5,<0.9.0"]
 build-backend = "uv_build"
+
+
+[tool.uv.sources]
+ai_tools = { workspace= false }
+
+[tool.uv.workspace]
+members = [
+    "examples/knowledge-tuning/01_Data_Preprocessing",
+]
