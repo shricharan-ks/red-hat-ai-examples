@@ -1,3 +1,23 @@
+# Data Preprocessing for Seed Dataset Generation (SDG)
+
+This directory contains the workflow and notebook for generating a **seed dataset** used in Synthetic Data Generation (SDG) as part of the Knowledge Tuning pipeline.
+## Overview
+
+The process transforms raw PDF documents into a structured seed dataset, ready for downstream machine learning or knowledge-tuning tasks. The main steps are:
+### 1. Check/Update the ai-tools Wheel Path
+
+Before creating the virtual environment, ensure the path to the `ai-tools` wheel file in `pyproject.toml` is correct and points to the latest build. 
+NOTE : Use `absolute` path
+Update the path if necessary.
+
+### 2. Create a Virtual Environment (using [uv](https://github.com/astral-sh/uv))
+### 3. Install Required Packages
+
+All dependencies are listed in `pyproject.toml` and `requirements.txt`.
+```sh
+uv pip install -r requirements.txt
+uv pip install -e .
+> **Note:** The `ai-tools` library is a local dependency. Ensure the wheel file or source is available as specified in `pyproject.toml`.
 
 # Data Preprocessing for Seed Dataset Generation (SDG)
 

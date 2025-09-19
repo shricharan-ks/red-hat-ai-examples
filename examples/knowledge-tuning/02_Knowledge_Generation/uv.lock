@@ -7,25 +7,21 @@ resolution-markers = [
     "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')",
 ]
 
-[manifest]
-members = [
-    "01-data-preprocessing",
-    "ai-tools",
-]
-
 [[package]]
-name = "01-data-preprocessing"
+name = "02-knowledge-generation"
 version = "0.1.0"
-source = { virtual = "examples/knowledge-tuning/01_Data_Preprocessing" }
+source = { virtual = "." }
 dependencies = [
     { name = "ai-tools" },
-    { name = "docling" },
+    { name = "datasets" },
+    { name = "sdg-hub" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "ai-tools", editable = "." },
-    { name = "docling", specifier = ">=2.53.0" },
+    { name = "ai-tools", path = "../../../dist/ai_tools-0.1.0-py3-none-any.whl" },
+    { name = "datasets", specifier = ">=3.6.0" },
+    { name = "sdg-hub", specifier = ">=0.3.0" },
 ]
 
 [[package]]
@@ -49,7 +45,7 @@ wheels = [
 [[package]]
 name = "ai-tools"
 version = "0.1.0"
-source = { editable = "." }
+source = { path = "../../../dist/ai_tools-0.1.0-py3-none-any.whl" }
 dependencies = [
     { name = "datasets" },
     { name = "docling" },
@@ -60,6 +56,9 @@ dependencies = [
     { name = "sdg-hub" },
     { name = "tabulate" },
     { name = "transformers" },
+]
+wheels = [
+    { filename = "ai_tools-0.1.0-py3-none-any.whl", hash = "sha256:48f2f9dcdfa3c7acb977db69047eee4d8459c5bebbbe5dfc46c496e0666abfcd" },
 ]
 
 [package.metadata]
