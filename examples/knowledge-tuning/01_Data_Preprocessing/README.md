@@ -1,31 +1,21 @@
 # Data Preprocessing for Seed Dataset Generation (SDG)
 
-This directory contains the workflow and notebook for generating a **seed dataset** used in Synthetic Data Generation (SDG) as part of the Knowledge Tuning pipeline.
-## Overview
+The first step in tuning the knowledge pipeline is to transform raw documents into a structured seed dataset, ready for downstream learning or knowledge-tuning tasks. In our example we will process a PDF file using the [Docling](https://pypi.org/project/docling/) library and generate a seed dataset for SDG.
 
-The process transforms raw PDF documents into a structured seed dataset, ready for downstream machine learning or knowledge-tuning tasks. The main steps are:
-### 1. Check/Update the ai-tools Wheel Path
+## Prerequisites
 
-Before creating the virtual environment, ensure the path to the `ai-tools` wheel file in `pyproject.toml` is correct and points to the latest build. 
-NOTE : Use `absolute` path
-Update the path if necessary.
+Ensure the following prerequisites are met before proceeding.
 
-### 2. Create a Virtual Environment (using [uv](https://github.com/astral-sh/uv))
-### 3. Install Required Packages
+1. A Red Hat OpenShift AI cluster has been configured for this example and meets the minimum system requirements. See Knowledge Tuning Example [Requirements](../README.md#requirements) and [Getting Started](../README.md#getting-started) for more information.
+2. An Open AI compatible endpoint for the model generating question and answer pairs, the model's API key, and the model's name.
 
-All dependencies are listed in `pyproject.toml` and `requirements.txt`.
-```sh
-uv pip install -r requirements.txt
-uv pip install -e .
-> **Note:** The `ai-tools` library is a local dependency. Ensure the wheel file or source is available as specified in `pyproject.toml`.
+## Inputs
 
-# Data Preprocessing for Seed Dataset Generation (SDG)
+A PDF file is required for processing. A sample file can be found in `../source_documents`.
 
-This directory contains the workflow and notebook for generating a **seed dataset** used in Synthetic Data Generation (SDG) as part of the Knowledge Tuning pipeline.
+## Process
 
-## Overview
-
-The process transforms raw PDF documents into a structured seed dataset, ready for downstream machine learning or knowledge-tuning tasks. The main steps are:
+The `Data_Preprocessing.ipynb` notebook will step though the following stages.
 
 1. **PDF file → Docling Output JSON**: Convert source PDF documents into structured JSON using the [docling](https://pypi.org/project/docling/) library.
 2. **Docling Output JSON → Chunks**: Segment the converted documents into smaller, meaningful text chunks.
@@ -33,57 +23,21 @@ The process transforms raw PDF documents into a structured seed dataset, ready f
 4. **Selected Chunks → QnA.yaml File**: Generate question-answer (QnA) pairs for each selected chunk using an LLM API.
 5. **Chunks + QnA.yaml → Seed Dataset**: Combine the chunks and QnA pairs into a final seed dataset for SDG.
 
-All steps are implemented in the provided Jupyter Notebook: `Data_Preprocessing.ipynb`.
+## Outputs
 
----
+After executing all cells in the `Data_Preprocessing.ipynb` notebook, the following artifacts will be saved in the `../output/step_01` directory:
 
-## Machine & Environment Requirements
+- `docling_output/`: JSONs
+- `chunks.jsonl`: All chunks
+- `selected_chunks.jsonl`: Randomly selected chunks
+- `qna.yaml`: QnA pairs
+- `final_seed_data.jsonl`: Final seed dataset for SDG
 
-- **RAM**: 16 GB or higher recommended (for processing large PDFs and running docling)
-- **Disk Space**: At least 10 GB free (for intermediate and output files)
-- **Python Version**: 3.12 (see `.python-version`)
-- **Model Requirements**: Access to a suitable LLM endpoint for QnA generation (see notebook for API details)
+## Get Started
 
----
+To get started, open the [Data_Preprocessing.ipynb](./Data_Preprocessing.ipynb) notebook within your workbench and follow the instructions directly in the notebook.
 
-## Setup Instructions
-
-### 1. Create a Virtual Environment (using [uv](https://github.com/astral-sh/uv))
-
-```sh
-uv venv .venv
-source .venv/bin/activate
-```
-
-### 2. Install Required Packages
-
-All dependencies are listed in `pyproject.toml` and `requirements.txt`.
-
-```sh
-uv pip install -r requirements.txt
-uv pip install -e .
-```
-
-#### Key Dependencies
-- `docling` (for PDF parsing and chunking)
-- `ai-tools` (custom utilities for QnA generation and seed dataset creation)
-
-> **Note:** The `ai-tools` library is a local dependency. Ensure the wheel file or source is available as specified in `pyproject.toml`.
-
----
-
-## Preparation Steps
-
-1. **Place your PDF files** in the `source_documents/` directory.
-2. **Run the notebook** `Data_Preprocessing.ipynb` step by step, following the flow described above.
-3. **Outputs** will be saved in the `output/step_01/` directory:
-    - `docling_output/` (JSONs)
-    - `chunks.jsonl` (all chunks)
-    - `selected_chunks.jsonl` (randomly selected chunks)
-    - `qna.yaml` (QnA pairs)
-    - `final_seed_data.jsonl` (final seed dataset)
-
----
+Once you are done, proceed to the next step, [Synthetic Data Processing](../02_Knowledge_Generation/README.md).
 
 ## Additional Notes
 
@@ -91,13 +45,10 @@ uv pip install -e .
 - Ensure your API credentials and endpoint for QnA generation are set correctly in the notebook.
 - For large documents or datasets, monitor RAM and disk usage.
 
----
-
 ## References
+
 - [docling documentation](https://pypi.org/project/docling/)
 - [uv documentation](https://github.com/astral-sh/uv)
 - [Jupyter Notebook](https://jupyter.org/)
-
----
 
 For any issues or questions, please refer to the notebook comments or contact the repository maintainer.
