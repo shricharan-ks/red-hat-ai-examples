@@ -1,6 +1,3 @@
-
-
 class DoclingOutput:
-
-    def run (self):
+    def run(self):
         return "runnning run from package"

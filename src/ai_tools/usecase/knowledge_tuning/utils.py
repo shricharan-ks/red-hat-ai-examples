@@ -1,20 +1,17 @@
 import json
-import yaml
 import random
-
 from pathlib import Path
-
-from docling_sdg.qa.prompts.generation_prompts import QaPromptTemplate
-from pydantic import SecretStr
 from textwrap import wrap
 
+import yaml
 from docling_core.transforms.chunker.hierarchical_chunker import DocChunk, DocMeta
-from docling_sdg.qa.utils import get_qa_chunks
-from docling_sdg.qa.generate import Generator
 from docling_sdg.qa.base import GenerateOptions, LlmProvider
+from docling_sdg.qa.generate import Generator
+from docling_sdg.qa.prompts.generation_prompts import QaPromptTemplate
+from docling_sdg.qa.utils import get_qa_chunks
+from pydantic import SecretStr
 
-
-CUSTOM_COMBINED_QUESTION_PROMPT =  (
+CUSTOM_COMBINED_QUESTION_PROMPT = (
     "I will provide you a text passage. I need you to generate three questions that "
     "must be answered only with information contained in this passage, and nothing "
     "else.\n"
@@ -40,28 +37,32 @@ CUSTOM_COMBINED_QUESTION_PROMPT =  (
     "Context: {context_str}"
 )
 
-chunk_filter = [
-    lambda chunk: len(str(chunk.text)) > 100
-]
+chunk_filter = [lambda chunk: len(str(chunk.text)) > 100]
+
 
 def str_presenter(dumper, data):
-  if len(data.splitlines()) > 1:  # check for multiline string
-    return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
-  elif len(data) > 80:
-    data = "\n".join(wrap(data, 80))
-    return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
-  return dumper.represent_scalar('tag:yaml.org,2002:str', data)
+    if len(data.splitlines()) > 1:  # check for multiline string
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+    elif len(data) > 80:
+        data = "\n".join(wrap(data, 80))
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
 
 yaml.add_representer(str, str_presenter)
 
 # to use with safe_dump:
 yaml.representer.SafeRepresenter.add_representer(str, str_presenter)
 
+
 class IndentedDumper(yaml.Dumper):
     def increase_indent(self, flow=False, indentless=False):
         return super(IndentedDumper, self).increase_indent(flow, False)
 
-def save_random_chunk_selection(chunks_jsonl_path: Path, output_dir: Path, num_seed_examples: int) -> Path:
+
+def save_random_chunk_selection(
+    chunks_jsonl_path: Path, output_dir: Path, num_seed_examples: int
+) -> Path:
     """
     Creates a seed dataset from a path
     Args:
@@ -72,11 +73,13 @@ def save_random_chunk_selection(chunks_jsonl_path: Path, output_dir: Path, num_s
         selected_chunks_file_path (pathlib.Path): Path to the generated seed example file
     """
     if not chunks_jsonl_path.exists():
-        raise ValueError(f"chunks.jsonl does not exist but should at {chunks_jsonl_path}")
+        raise ValueError(
+            f"chunks.jsonl does not exist but should at {chunks_jsonl_path}"
+        )
 
     chunks = []
 
-    with open(chunks_jsonl_path, 'r') as file:  # khaled was here
+    with open(chunks_jsonl_path, "r") as file:  # khaled was here
         for line in file:
             chunk = json.loads(line)
             chunks.append(chunk)
@@ -91,7 +94,18 @@ def save_random_chunk_selection(chunks_jsonl_path: Path, output_dir: Path, num_s
 
     return selected_chunks_file_path
 
-def generate_seed_examples(contribution_name: str, chunks_jsonl_path: Path, output_dir: Path, api_key: str, api_url: str, model_id: str, domain: str, summary: str, customization_str: str | None = None) -> Path:
+
+def generate_seed_examples(
+    contribution_name: str,
+    chunks_jsonl_path: Path,
+    output_dir: Path,
+    api_key: str,
+    api_url: str,
+    model_id: str,
+    domain: str,
+    summary: str,
+    customization_str: str | None = None,
+) -> Path:
     """
     Generates questions and answers per chunk via docling sdg. Saves them in an intermediate file
     Args:
@@ -110,33 +124,34 @@ def generate_seed_examples(contribution_name: str, chunks_jsonl_path: Path, outp
     dataset[contribution_name]["chunks"] = []
 
     if not chunks_jsonl_path.exists():
-        raise ValueError(f"chunks file does not exist but should at {chunks_jsonl_path}")
+        raise ValueError(
+            f"chunks file does not exist but should at {chunks_jsonl_path}"
+        )
 
     docs = []
 
-    with open(chunks_jsonl_path, 'r') as file:  # khaled was here
+    with open(chunks_jsonl_path, "r") as file:  # khaled was here
         for line in file:
             file_in_docs = False
             entry = json.loads(line)
-            #entry = yaml.safe_load(line)
-            meta = DocMeta(**entry['metadata'])
-            chunk = DocChunk(text=entry['chunk'], meta=meta)
+            # entry = yaml.safe_load(line)
+            meta = DocMeta(**entry["metadata"])
+            chunk = DocChunk(text=entry["chunk"], meta=meta)
             for doc in docs:
-                if doc["file"] == entry['file']:
+                if doc["file"] == entry["file"]:
                     doc["chunk_objs"].append(chunk)
                     file_in_docs = True
                     break
 
-            if file_in_docs == False:
-                doc = dict(file=entry['file'], chunk_objs=[chunk])
+            if not file_in_docs:
+                doc = dict(file=entry["file"], chunk_objs=[chunk])
                 docs.append(doc)
 
     for doc in docs:
         print(f"Filtering smaller chunks out of chunks from document {doc['file']}")
-        
+
         qa_chunks = get_qa_chunks(doc["file"], doc["chunk_objs"], chunk_filter)
         dataset[contribution_name]["chunks"].extend(list(qa_chunks))
-
 
     selected_chunks = dataset[contribution_name]["chunks"]
 
@@ -148,17 +163,19 @@ def generate_seed_examples(contribution_name: str, chunks_jsonl_path: Path, outp
     generate_options.generated_file = output_dir / f"qagen-{contribution_name}.json"
 
     if customization_str is not None:
-        generate_options.prompts = [QaPromptTemplate(
-            template=CUSTOM_COMBINED_QUESTION_PROMPT,
-            keys=["context_str", "customization_str"],
-            labels=["fact_single", "summary", "reasoning"],
-            type_="question",
-        )]
+        generate_options.prompts = [
+            QaPromptTemplate(
+                template=CUSTOM_COMBINED_QUESTION_PROMPT,
+                keys=["context_str", "customization_str"],
+                labels=["fact_single", "summary", "reasoning"],
+                type_="question",
+            )
+        ]
 
     gen = Generator(generate_options=generate_options)
 
     Path.unlink(generate_options.generated_file, missing_ok=True)
-    results = gen.generate_from_chunks(selected_chunks) # automatically saves to file
+    results = gen.generate_from_chunks(selected_chunks)  # automatically saves to file
 
     print(f"Status for Q&A generation for {contribution_name} is: {results.status}")
 
@@ -167,38 +184,54 @@ def generate_seed_examples(contribution_name: str, chunks_jsonl_path: Path, outp
     with open(generate_options.generated_file, "rt") as f:
         for line in f.readlines():
             entry = json.loads(line)
-            chunk_id = entry['chunk_id']
+            chunk_id = entry["chunk_id"]
             if chunk_id not in chunk_id_to_text:
-                chunk_id_to_text[chunk_id] = entry['context']
+                chunk_id_to_text[chunk_id] = entry["context"]
             if chunk_id not in qnas:
                 qnas[chunk_id] = []
-            qnas[chunk_id].append({'question': entry['question'], 'answer': entry['answer']})
+            qnas[chunk_id].append(
+                {"question": entry["question"], "answer": entry["answer"]}
+            )
 
     qna_output_path = output_dir / "qna.yaml"
-    
-    data = {'seed_examples': []}
-    for chunk_id, context in chunk_id_to_text.items():
-        data['seed_examples'].append({
-            'context': context,
-            'questions_and_answers': [
-                {
-                    'question': example['question'],
-                    'answer': example['answer'],
-                } for example in qnas[chunk_id]
-            ]
-        })
 
-    
-    data['document_outline'] = summary
-    data['domain'] = domain
-    
-    Path.unlink(qna_output_path, missing_ok=True) # shouldn't be necessary but was. jupyter caching thing?
-    with open(qna_output_path, 'w') as yaml_file:
-        yaml.dump(data, yaml_file, Dumper=IndentedDumper, default_flow_style=False, sort_keys=False, width=80)
-    
+    data = {"seed_examples": []}
+    for chunk_id, context in chunk_id_to_text.items():
+        data["seed_examples"].append(
+            {
+                "context": context,
+                "questions_and_answers": [
+                    {
+                        "question": example["question"],
+                        "answer": example["answer"],
+                    }
+                    for example in qnas[chunk_id]
+                ],
+            }
+        )
+
+    data["document_outline"] = summary
+    data["domain"] = domain
+
+    Path.unlink(
+        qna_output_path, missing_ok=True
+    )  # shouldn't be necessary but was. jupyter caching thing?
+    with open(qna_output_path, "w") as yaml_file:
+        yaml.dump(
+            data,
+            yaml_file,
+            Dumper=IndentedDumper,
+            default_flow_style=False,
+            sort_keys=False,
+            width=80,
+        )
+
     return qna_output_path
 
-def review_seed_examples_file(seed_examples_path: Path, min_seed_examples: int = 5, num_qa_pairs: int = 3) -> None:
+
+def review_seed_examples_file(
+    seed_examples_path: Path, min_seed_examples: int = 5, num_qa_pairs: int = 3
+) -> None:
     """
     Review a seed example file has the expected number of fieldds
     Args:
@@ -208,51 +241,62 @@ def review_seed_examples_file(seed_examples_path: Path, min_seed_examples: int =
     Returns:
         None
     """
-    with open(seed_examples_path, 'r') as yaml_file:
+    with open(seed_examples_path, "r") as yaml_file:
         yaml_data = yaml.safe_load(yaml_file)
         errors = []
         print(f"Reviewing seed examples file at {seed_examples_path.resolve()}")
 
         # Check for document_outline
-        if 'document_outline' not in yaml_data:
+        if "document_outline" not in yaml_data:
             errors.append("Missing contribution summary in 'document_outline'")
         else:
             # contribution summary is called document_outline internally
-            print(f"Found contribution summary...")
+            print("Found contribution summary...")
 
         # Check for domain
-        if 'domain' not in yaml_data:
+        if "domain" not in yaml_data:
             errors.append("Missing 'domain'")
         else:
-            print(f"Found 'domain'...")
+            print("Found 'domain'...")
 
         # Check seed_examples
-        seed_examples = yaml_data.get('seed_examples')
+        seed_examples = yaml_data.get("seed_examples")
         if not seed_examples:
             errors.append("'seed_examples' section is missing or empty.")
         elif len(seed_examples) < min_seed_examples:
-            errors.append(f"'seed_examples' should contain at least {min_seed_examples} examples, found {len(seed_examples)}. Please add {min_seed_examples - len(seed_examples)} more seed example(s)")
+            errors.append(
+                f"'seed_examples' should contain at least {min_seed_examples} examples, found {len(seed_examples)}. Please add {min_seed_examples - len(seed_examples)} more seed example(s)"
+            )
         else:
-            print(f"Found {len(seed_examples)} 'contexts' in 'sed_examples'. Minimum expected number is {min_seed_examples}...")
+            print(
+                f"Found {len(seed_examples)} 'contexts' in 'sed_examples'. Minimum expected number is {min_seed_examples}..."
+            )
 
         if seed_examples:
             for i, example in enumerate(seed_examples, start=1):
-                qa_pairs = example.get('questions_and_answers')
+                qa_pairs = example.get("questions_and_answers")
                 if not qa_pairs:
-                    errors.append(f"Seed Example {i} is missing 'questions_and_answers' section.")
+                    errors.append(
+                        f"Seed Example {i} is missing 'questions_and_answers' section."
+                    )
                 elif len(qa_pairs) != num_qa_pairs:
-                    errors.append(f"Seed Example {i} should contain {num_qa_pairs} question-answer pairs, found {len(qa_pairs)}. Please add {num_qa_pairs - len(qa_pairs)} more question-answer pair(s) to seed example {i}")
+                    errors.append(
+                        f"Seed Example {i} should contain {num_qa_pairs} question-answer pairs, found {len(qa_pairs)}. Please add {num_qa_pairs - len(qa_pairs)} more question-answer pair(s) to seed example {i}"
+                    )
                 else:
-                    print(f"Seed Example {i} contains expected number ({num_qa_pairs}) of 'question_and_answers'...")
+                    print(
+                        f"Seed Example {i} contains expected number ({num_qa_pairs}) of 'question_and_answers'..."
+                    )
 
         if errors:
-            print("\n\033[31mERROR! Seed Examples validation failed with the following issues:\033[0m")
+            print(
+                "\n\033[31mERROR! Seed Examples validation failed with the following issues:\033[0m"
+            )
             for err in errors:
                 print(f"- {err}")
         else:
             print(f"Seed Examples YAML {seed_examples_path.resolve()} is valid :)")
-        print(f"\n")
-
+        print("\n")
 
 
 def view_seed_example(qna_output_path: Path, seed_example_num: int) -> None:
@@ -267,9 +311,11 @@ def view_seed_example(qna_output_path: Path, seed_example_num: int) -> None:
 
     with open(qna_output_path, "r") as yaml_file:
         yaml_data = yaml.safe_load(yaml_file)
-        seed_examples = yaml_data.get('seed_examples')
+        seed_examples = yaml_data.get("seed_examples")
         if seed_example_num >= len(seed_examples):
-            raise ValueError(f"seed_example_num must be less than number of seed examples {len(seed_examples)}")
+            raise ValueError(
+                f"seed_example_num must be less than number of seed examples {len(seed_examples)}"
+            )
         seed_example = seed_examples[seed_example_num]
         print("Context:")
         print(f"{seed_example['context']}\n")
