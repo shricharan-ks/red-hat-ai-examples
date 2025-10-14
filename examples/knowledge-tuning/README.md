@@ -25,7 +25,7 @@ To run the knowledge tuning workflow, you must use a Red Hat OpenShift AI cluste
 
 - **RAM**: 16 GB or higher recommended for processing large PDFs and running docling
 - **Disk Space**: At least 10 GB free for intermediate and output files
-- **Model Requirements**: Access to a suitable LLM endpoint for Question and Answer (QnA) generation 
+- **Model Requirements**: Access to an LLM endpoint for question and answer (QnA) generation.
 
 ## Table of Contents
 

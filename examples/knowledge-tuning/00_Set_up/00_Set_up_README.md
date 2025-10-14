@@ -247,15 +247,12 @@ In the file browser, view the notebooks that you cloned from Git.
 
 In JupyterLab, open the [00_Setup.ipynb](./00_Setup.ipynb) notebook and follow the instructions within the notebook.
 
-### Let's Begin
-
-Congratulations! Your workbench is configured and ready for the knowledge training example. Throughout this example you will be guided through to a series of notebooks. Each notebook and supporting documentation will provide more hands-on details about each step in the pipeline.
-
-Let's get started with [Data Preprocessing](./01_Data_Preprocessing/README.md)!
-
 ### Next step
 
-[Synthetic Data Processing](../02_Knowledge_Generation/README.md)
+Congratulations! Your workbench is configured and ready for the knowledge training example. Throughout this example you will be guided through to a series of notebooks. Each notebook and supporting documentation provides  hands-on details about each step in the knowledge training pipeline.
+
+Get started with [Data Preprocessing](./01_Data_Preprocessing/README.md)!
+
 
 
 [def]: #Se
