@@ -6,8 +6,8 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "docling>=2.53.0",
-    "ai-tools @ file:///Users/scharan/projects/red-hat-ai-examples/dist/ai_tools-0.1.0-py3-none-any.whl",
-
+    "markdown-it-py>=4.0.0",
+    "tiktoken>=0.11.0",
 ]
 
 
