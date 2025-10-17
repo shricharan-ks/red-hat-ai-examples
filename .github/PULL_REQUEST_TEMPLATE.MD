@@ -3,7 +3,7 @@ Provide a short summary in the Title above. Examples of good PR titles:
 * "Fix: deduplicate such-and-such"
 * "Update: dbt version 0.13.0"
 
-## Usecase - iLab Knowledge Pipeline
+# Usecase - iLab Knowledge Pipeline
 
 ## Description
  Give a more detailed description of your changes here. Include any motivation and context.
@@ -14,8 +14,7 @@ Fixes # (issue)
 
 ## Related Tickets
 Related jira tickets here:
-- [:ticket: ISSUE-1242](https://issues.redhat.com/browse/ISSUE-1242)
-- [:ticket: ISSUE-1239](https://issues.redhat.com/browse/ISSUE-1239)
+- [:ticket: ISSUE-1242](https://jira.domain.com/browse/ISSUE-1242)
 
 
 ## Type of change
