@@ -1,10 +1,9 @@
 [project]
-name = "03-model-training"
+name = "05-evaluation"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "training-hub>=0.2.0",
-    "liger_kernel>=0.6.2"
+    "transformers>=4.57.1",
 ]

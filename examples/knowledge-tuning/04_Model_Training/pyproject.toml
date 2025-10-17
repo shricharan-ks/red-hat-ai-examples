@@ -1,10 +1,10 @@
 [project]
-name = "02-knowledge-generation"
+name = "03-model-training"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "sdg-hub>=0.3.0",
-    "datasets>=3.6.0",
+    "training-hub>=0.3.0",
+    "transformers>=4.57.1",
 ]
