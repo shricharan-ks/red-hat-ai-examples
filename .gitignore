@@ -1,6 +1,10 @@
 metrics/**
 
 pipelines/*.yaml
+# Ignore all the uv lock file
+
+uv.lock
+**/uv.lock
 
 # Mac directory meta file
 .DS_Store
