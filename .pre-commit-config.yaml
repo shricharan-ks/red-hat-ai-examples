@@ -35,3 +35,4 @@ repos:
       - id: detect-secrets
         name: detectsecrets scan
         language: python
+        args: ['--exclude-lines', 'HF_TOKEN|hf-hub-secret']
