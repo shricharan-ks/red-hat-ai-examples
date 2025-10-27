@@ -1,6 +1,6 @@
 # OSFT Continual Learning on Red Hat OpenShift AI (RHOAI)
 
-This example provides and overview on OSFT algorithm and an example on how to use it context of Red Hat OpenShift AI.
+This example provides an overview of the OSFT algorithm and an example on how to use it with Red Hat OpenShift AI.
 
 Our example will go through distributed training on two nodes with two GPUs each (2x48GB) however it can be tweaked to run on smaller configurations.
 
@@ -18,7 +18,7 @@ The OSFT algorithm implements Orthogonal Subspace Fine-Tuning based on Nayak et 
 
 ### Data Format Requirements
 
-Training Hub's OSFT algorithm supports both **processed** and **unprocessed** data formats via the mini-trainer backend.
+Training Hub's OSFT algorithm supports both **processed** and **unprocessed** data formats via the [mini-trainer](https://github.com/Red-Hat-AI-Innovation-Team/mini_trainer/) backend.
 
 #### Option 1: Standard Messages Format (Recommended)
 
@@ -61,12 +61,46 @@ Use with:
 ```python
 osft(..., use_processed_dataset=True)
 ```
-## Requirements
+## General requirements to run the example notebook
 
 * An OpenShift cluster with OpenShift AI (RHOAI) installed:
   * The `dashboard`, `trainingoperator` and `workbenches` components enabled
-* Sufficient worker nodes for your configuration(s). The example by default requires 2xL40/L40S (2x48GB) GPUs and a single GPU for workbench model evaluation. However the configuration can be tweaked to reduce the requirements.
-* A dynamic storage provisioner supporting RWX PVC provisioning
+
+## Hardware requirements to run the example notebook
+
+### Training Job Requirements
+
+| Component | Configuration | GPU per node | Total GPU | GPU Type (per GPU) | CPU | Memory | Flash Attention |
+|-----------|--------------|---|---|------------|-----|--------|-----------------|
+| Training Pods (Example Default) | 2 nodes × 2 GPUs | 2 | 4 | NVIDIA L40/L40S or equivalent | 4 cores/pod | 24Gi/pod | Required |
+| Training Pods (Minimum) | 1 node × 2 GPUs | 2 | 2 | NVIDIA L40/L40S or equivalent | 4 cores/pod | 24Gi/pod | Required |
+
+> [!NOTE]
+> - This example was tested on 2 nodes x 2 GPUs provided by L40S however, it will work on smaller/larger configurations.
+> - Flash Attention is required for efficient training.
+> - CPU and Memory requirements scale with batch size and model size. Above suit the example as it is.
+> - Worker pods are configurable from the `client.create_job` call within the notebook.
+
+### Workbench Requirements
+
+| Image Type | Use Case | GPU | CPU | Memory | Notes |
+|------------|----------|-----|-----|--------|-------|
+| Minimal CPU Python 3.12 | CPU-based evaluation | None | 6 cores | 24Gi | Slower evaluation |
+| Minimal CUDA Python 3.12 (Example Default) | NVIDIA GPU evaluation (Example Default) | 1× GPU | 2 cores | 8Gi | Recommended for faster testing |
+| Minimal ROCm Python 3.12 | AMD GPU evaluation | 1× GPU | 2 cores | 8Gi | AMD accelerator support |
+
+> [!NOTE]
+> - Workbench GPU is optional but recommended for faster model evaluation
+> - Evaluation was performed on L40S GPU however, it will work on smaller/larger configurations.
+> - Workbench resources and accelerator are configurable in `Create Workbench` view on RHOAI Platform
+
+### Storage Requirements
+
+| Purpose | Size | Access Mode | Storage Class | Notes |
+|---------|------|-------------|---------------|-------|
+| Shared Storage (PVC) total | 10Gi (Example Default) | RWX | Dynamic provisioner required | Shared between workbench and training pods |
+
+> - Storage can be created in `Create Workbench` view on RHOAI Platform, however, dynamic RWX provisioner is required to be configured prior to creating shared file storage in RHOAI.
 
 ## Setup
 
@@ -102,4 +136,4 @@ osft(..., use_processed_dataset=True)
 > [!IMPORTANT]
 > * By default, the notebook requires 2xL40/L40S (2x48GB) but:
 >   * The example goes through distributed training on two nodes with two GPUs but it can be changed
->   * If you want to do model evaluation part of the example, ideally an accelerator is attached to workbench
+>   * If you want to do model evaluation part of the example, ideally an accelerator is attached to the workbench
