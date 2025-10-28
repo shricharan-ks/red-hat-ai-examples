@@ -3,7 +3,16 @@
 
 This repository contains a self-contained Knowledge Tuning example using the InstructLab methodology. It demonstrates how to convert domain documents into a seed dataset, generate Q&A knowledge, mix and prepare training data, train knowledge-aware models, and evaluate results — all in a reproducible workbench environment.
 
-Top-level flow (end-to-end)
+## Flow Diagram
+Usecase Flow Diagram
+![Usecase Flow Diagram](../../assets/usecase/knowledge-tuning/Overall%20Flow.png)
+
+
+Detailed Flow Diagram
+![Detailed Flow Diagram](../../assets/usecase/knowledge-tuning/Detailed%20Flow.png)
+
+## Top-level flow (end-to-end)
+
 
 1. Data Collection — gather domain documents (PDFs, manuals, etc.) into `examples/knowledge-tuning/source_documents`
 2. Data Preprocessing — convert PDFs to structured JSON (docling), chunk text, and produce a small seed dataset (step 01)
@@ -41,14 +50,5 @@ How to use this example
 4. Open `examples/knowledge-tuning/00_Setup.ipynb` and follow the setup steps (creating venvs and installing local packages as needed).
 5. Work through the notebooks step-by-step, from `01_Data_Preprocessing` to `05_Evaluation`.
 
-If you are using local editable installs (recommended during development), create and activate a virtual environment, then install the local utilities in editable mode. For example:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ../../
-```
-
-Alternatively, ensure `src/` is on your `PYTHONPATH`. Avoid relying on built wheel files inside the examples.
 
 Next: start with [Data Preprocessing (step 01)](./01_Data_Preprocessing/README.md)

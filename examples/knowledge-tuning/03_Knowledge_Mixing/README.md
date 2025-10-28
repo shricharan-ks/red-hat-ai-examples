@@ -49,10 +49,6 @@ If you need to use local helper utilities included in this repository (for examp
 
 - Editable install from the repository root (recommended for development):
 
-```bash
-# from the step folder
-pip install -e ../../
-```
 
 - Or add the repository `src/` directory to `PYTHONPATH` or `sys.path` in your notebooks (useful for ephemeral testing).
 

@@ -14,11 +14,6 @@ This repository provides example notebooks and flows to help users get started w
 
 1. Clone this repository.
 2. Explore the `examples/` directory for examples for different usecase.
-3. Use the `ai-tools` library to for helper/utility functions required for the examples.
-    Build the wheel for th `ai-tools` library using the following command:
-    ```sh
-    uv build
-    ```
 4. Follow the instructions in each example's `README.md` for setup and execution.
 
 ## Contributing
