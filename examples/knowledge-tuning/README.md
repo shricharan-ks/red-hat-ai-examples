@@ -1,60 +1,46 @@
-# Knowledge Tuning Example
 
-This example workflow demonstrates **knowledge tuning** using the InstructLab methodology on Red Hat OpenShift AI. Knowledge tuning enables you to inject domain-specific knowledge into language models, improving their accuracy and relevance for enterprise use cases.
+# Knowledge Tuning — High level overview
 
-In this example you will have the opportunity to run example notebooks that cover,
+This repository contains a self-contained Knowledge Tuning example using the InstructLab methodology. It demonstrates how to convert domain documents into a seed dataset, generate Q&A knowledge, mix and prepare training data, train knowledge-aware models, and evaluate results — all in a reproducible workbench environment.
 
-1. **Data Collection**  
-    Gather domain-specific documents, FAQs, manuals, or other relevant knowledge sources.
-2. **Data Preprocessing**  
-    Clean, format, and chunk the data for efficient ingestion.
-3. **Knowledge Base Creation**  
-    Store the processed data in a vector database or knowledge store.
-4. **Model Integration**  
-    Connect the language model to the knowledge base using retrieval-augmented generation (RAG) or similar techniques.
-5. **Query Handling**  
-    When a user asks a question, retrieve relevant knowledge snippets and feed them to the model for context-aware answers.
-6. **Evaluation & Iteration**  
-    Test the system, gather feedback, and refine the knowledge base and model integration.
+Top-level flow (end-to-end)
 
-## Requirements
+1. Data Collection — gather domain documents (PDFs, manuals, etc.) into `examples/knowledge-tuning/source_documents`
+2. Data Preprocessing — convert PDFs to structured JSON (docling), chunk text, and produce a small seed dataset (step 01)
+3. Knowledge Generation — expand seed examples into more Q&A pairs using an LLM or endpoint (step 02)
+4. Knowledge Mixing — combine generated content and summaries into training mixes (step 03)
+5. Model Training — fine-tune or instruction-tune a model using the prepared mixes (step 04)
+6. Evaluation — run evaluation notebooks and metrics on held-out data (step 05)
 
-The knowledge tuning workflow is intended to be executed on a Red Hat OpenShift AI cluster meeting the following requirements.
+Each step lives in a subfolder under `examples/knowledge-tuning/` and contains a notebook, a `pyproject.toml` for dependencies, and a `README.md` describing that step.
 
-- **RAM**: 16 GB or higher recommended (for processing large PDFs and running docling)
-- **Disk Space**: At least 10 GB free (for intermediate and output files)
-- **Model Requirements**: Access to a suitable LLM endpoint for QnA generation (see notebook for API details)
+RHOAI Workbench & platform specifications
 
-## Getting Started
+These guidelines help you configure a Red Hat OpenShift AI (RHOAI) workbench that can run the notebooks reliably.
 
-To get started, we need to ensure our Red Hat OpenShift AI cluster and example-specific configuration is complete.
+- Workbench image: a JupyterLab image with Python 3.12, CUDA and common ML tooling (tokenizers, transformers, polars). Example label: `jupyter/tensorflow-cuda-py3.12` (custom images often used internally).
+- GPU: Optional for preprocessing and mixing. Required/strongly recommended for model training (step 04) — at least one NVIDIA A100/40GB or similar for fine-tuning large models; for smaller student models an 8–16 GB GPU may suffice.
+- Persistent storage: A mounted persistent volume (PVC) for the workbench is required to store `examples/knowledge-tuning/output/` and large intermediate artifacts. Allocate 50+ GB for realistic datasets.
+- Accelerators: If using on-node inference/quantized student models, preferred accelerators are NVIDIA GPUs with CUDA support. For CPU-only runs, ensure at least 16 vCPU and 64 GB RAM for heavier pipelines.
+- Environment variables: Workbench should provide a `.env` or secret injection mechanism for API keys and configuration. Typical variables used across the notebooks include:
+  - `API_KEY` — API key for LLM endpoints (if used)
+  - `ENDPOINT` — LLM HTTP endpoint
+  - `MODEL_NAME` — LLM model name for generation
+  - `OUTPUT_DATA_FOLDER` — top-level folder for experiment outputs (default: `generated_output_data`)
+  - `STUDENT_MODEL` — tokeniser/model to use for token counting
 
-### Data Science Project
+Security & access
 
-_Instructions on how to configure a Data Science Project for this example. See the [Fraud Detection Workshop](https://rh-aiservices-bu.github.io/fraud-detection/fraud-detection-workshop/setting-up-your-data-science-project.html) for inspiration..._
+Do not commit secrets. Use the workbench's secret management to inject API keys. The notebooks read environment variables via `python-dotenv` (if `.env` is present) or the process environment.
 
-### Storage Data Connections
+How to use this example
 
-_Instructions on how to configure a Storage Data Connections for this example. See the [Fraud Detection Workshop](https://rh-aiservices-bu.github.io/fraud-detection/fraud-detection-workshop/storing-data-with-connections.html) for inspiration..._
+1. Create or choose a RHOAI workbench with the recommended image.
+2. Attach a Persistent Volume with at least 50 GB.
+3. Clone this repository inside the workbench.
+4. Open `examples/knowledge-tuning/00_Setup.ipynb` and follow the setup steps (creating venvs and installing local packages as needed).
+5. Work through the notebooks step-by-step, from `01_Data_Preprocessing` to `05_Evaluation`.
 
-### Workbench
+If you are using local editable installs (recommended during development), install local utilities from the repository root (for example: `uv pip install -e ../../`) or ensure `src/` is on your `PYTHONPATH`. Avoid relying on built wheel files inside the examples.
 
-This example includes running several JupyterLab Notebooks within a single workbench. To create a workbench,
-
-1. _Instructions on how to create a `Jupyter | TensorFlow | CUDA | Python 3.12` Workbench for this example. See the [Fraud Detection Workshop](https://rh-aiservices-bu.github.io/fraud-detection/fraud-detection-workshop/storing-data-with-connections.html) for inspiration..._
-2. Launch the workbench
-
-### Clone Example Repository
-
-1. _Instructions on how to clone the repository for this example. See the [Fraud Detection Workshop](https://rh-aiservices-bu.github.io/fraud-detection/fraud-detection-workshop/importing-files-into-jupyter.html) for inspiration..._
-2. Clone <https://github.com/shricharan-ks/red-hat-ai-examples>
-
-### Setup
-
-In your JupyterLab workbench, open the [00_Setup.ipynb](./00_Setup.ipynb) notebook and follow the instructions within the notebook.
-
-### Let's Begin
-
-Congratulations! Your workbench is configured and ready for the knowledge training example. Throughout this example you will be guided through to a series of notebooks. Each notebook and supporting documentation will provide more hands-on details about each step in the pipeline.
-
-Let's get started with [Data Preprocessing](./01_Data_Preprocessing/README.md)!
+Next: start with [Data Preprocessing (step 01)](./01_Data_Preprocessing/README.md)

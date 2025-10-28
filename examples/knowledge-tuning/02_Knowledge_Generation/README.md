@@ -1,50 +1,83 @@
-# Knowledge Generation for Seed Dataset Generation (SDG)
 
-The second step in tuning the knowledge pipeline is generating knowledge (QnA pairs and related data) as part of the Synthetic Data Generation (SDG) pipeline. In our example we will take the seed dataset (produced in the Data Preprocessing step) and generate additional knowledge artifacts, such as QnA pairs, using LLMs and custom utilities.
+# Step 02 — Knowledge Generation (expand seed into QnA)
 
-## Prerequisites
+Navigation
 
-Ensure the following prerequisites are met before proceeding.
+- Overview: [Knowledge Tuning root](../README.md)
+- Step 01 — Data Preprocessing: [../01_Data_Preprocessing/README.md](../01_Data_Preprocessing/README.md)
+- Step 02 — Knowledge Generation (this page)
+- Step 03 — Knowledge Mixing: [../03_Knowledge_Mixing/README.md](../03_Knowledge_Mixing/README.md)
+- Step 04 — Model Training: [../04_Model_Training/README.md](../04_Model_Training/README.md)
+- Step 05 — Evaluation: [../05_Evaluation/README.md](../05_Evaluation/README.md)
 
-1. The previous example, [Data Preprocessing](../01_Data_Preprocessing/README.md), was successfully completed in this workbench.
-2. An Open AI compatible endpoint for the model generating question and answer pairs, the model's API key, and the model's name.
+Purpose
 
-## Inputs
+This step expands the curated seed examples produced by Step 01 into a larger set of Q&A pairs using LLMs and local utilities. It can be used to produce synthetic training examples or to augment existing datasets.
 
-The seed dataset from the Data Preprocessing step is available at `../output/step_1/final_seed_data.jsonl`
+End-to-end flow inside this step
 
-## Process
+- `final_seed_data.jsonl` → call LLM endpoint(s) → generate `qagen-*.json` artifacts → post-process → `qna.yaml`
 
-The `Knowledge Generation.ipynb` notebooks will step through the following stages.
+Prerequisites
 
-1. **Seed Dataset → QnA Generation**: Use the seed dataset and an LLM endpoint to generate new QnA pairs or expand existing ones.
-2. **Review & Post-process**: Optionally review, filter, or post-process the generated QnA pairs for quality and relevance.
-3. **Save Outputs**: Store the generated knowledge artifacts for downstream use.
+- `final_seed_data.jsonl` produced by Step 01 available under the step 01 output directory.
+- Access to an LLM endpoint (API key and endpoint URL).
+- Python environment with this step's `pyproject.toml` dependencies installed.
 
-## Outputs
+Inputs
 
-After executing all cells in the `Knowledge Generation.ipynb` notebook, the following artifacts will be saved in the `../output/step_02` directory:
+- `output/step_01/final_seed_data.jsonl` (seed dataset)
 
-- `qagen-*.json`: Generated QnA pairs
-- `qna.yaml`: Final QnA file
-- Other intermediate or final artifacts as needed
+Outputs
 
-## Get Started
+- `output/step_02/qagen-*.json` — raw generation outputs
+- `output/step_02/qna.yaml` — consolidated QnA pairs ready for review
 
-To get started, open the [Knowledge Generation.ipynb](./Knowledge_Generation.ipynb) notebook within your workbench and follow the instructions directly in the notebook.
+Environment variables (common examples)
 
-Once you are done, proceed tot he next step...
+- `API_KEY` — LLM API key
+- `ENDPOINT` — LLM HTTP endpoint
+- `MODEL_NAME` — model to call for generation
+- `CUSTOMISATION_PROMPT` — optional prompt to tailor generation
 
-## Additional Notes
+Install dependencies (pyproject)
 
-- The notebook is modular; you can adjust parameters (e.g., number of QnA pairs, prompt) as needed.
-- Ensure your API credentials and endpoint for QnA generation are set correctly in the notebook.
-- For large datasets, monitor RAM and disk usage.
+From the `examples/knowledge-tuning/02_Knowledge_Generation` folder:
 
-## References
+```bash
+uv venv .venv
+source .venv/bin/activate
+uv pip install -r requirements.txt
+```
 
-- [docling documentation](https://pypi.org/project/docling/)
-- [uv documentation](https://github.com/astral-sh/uv)
-- [Jupyter Notebook](https://jupyter.org/)
+If you need to use local helper utilities included in this repository (for example, the `ai_tools` package in `src/`), prefer one of these options instead of building wheels:
 
-For any issues or questions, please refer to the notebook comments or contact the repository maintainer.
+- Editable install from the repository root (recommended for development):
+
+```bash
+# from the step folder
+uv pip install -e ../../
+```
+
+- Or add the repository `src/` directory to `PYTHONPATH` or `sys.path` in your notebooks (useful for ephemeral testing).
+
+Avoid building and referencing local wheel files in examples — editable installs or workspace-based development are simpler and less error-prone.
+
+How to run
+
+1. Activate the venv for this step.
+2. Open `Knowledge_Generation.ipynb` and run cells in order.
+3. Review the generated `qagen-*.json` and `qna.yaml` files in `output/step_02/`.
+
+Prerequisites from earlier steps
+
+- Must have completed Step 01 and have `final_seed_data.jsonl` available.
+
+Debug & tips
+
+- If generation fails: verify API key, endpoint URL, and request rate limits.
+- Keep the generation prompt small and iteratively improve `CUSTOMISATION_PROMPT`.
+
+Next step
+
+Proceed to [Knowledge Mixing (step 03)](../03_Knowledge_Mixing/README.md) after you have `qna.yaml` and generation artifacts.
