@@ -1,17 +1,22 @@
-# Data Preprocessing for Seed Dataset Generation (SDG)
+# Data processing for seed dataset generation
 
-The first step in tuning the knowledge pipeline is to transform raw documents into a structured seed dataset, ready for downstream learning or knowledge-tuning tasks. In our example we will process a PDF file using the [Docling](https://pypi.org/project/docling/) library and generate a seed dataset for SDG.
+The first step in the knowledge tuning workflow is to transform raw documents into a structured seed dataset that is ready for downstream learning or knowledge-tuning tasks. In this example, you process a PDF file by using the [Docling](https://pypi.org/project/docling/) library and then generate a seed dataset to use for synthetic data generation (SDG).
 
 ## Prerequisites
 
 Ensure the following prerequisites are met before proceeding.
 
-1. A Red Hat OpenShift AI cluster has been configured for this example and meets the minimum system requirements. See Knowledge Tuning Example [Requirements](../README.md#requirements) and [Getting Started](../README.md#getting-started) for more information.
-2. An Open AI compatible endpoint for the model generating question and answer pairs, the model's API key, and the model's name.
+- You have access to a Red Hat OpenShift AI cluster that is configured for this example and meets the minimum system requirements. See Knowledge Tuning Example [Requirements](../README.md#requirements) and [Getting Started](../00_Set_up/00_Set_up_README.md) for more information.
 
-## Inputs
+- You have the following information for the model that generates the question and answer pairs:
+   - An Open AI compatible endpoint
+   - The model's API key
+   - The model's name
 
-A PDF file is required for processing. A sample file can be found in `../source_documents`.
+- You have access to input data. For this example, a sample PDF file is located in `../source_documents`.
+<!-- need to change to the URL?
+-->
+
 
 ## Process
 
