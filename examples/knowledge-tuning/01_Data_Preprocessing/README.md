@@ -53,9 +53,9 @@ Each step contains a `pyproject.toml` describing the Python dependencies. To ins
 
 ```bash
 # from the step folder
-uv venv .venv
+python -m venv .venv
 source .venv/bin/activate
-uv pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 If you need to use local helper utilities included in this repository (for example, the `ai_tools` package in `src/`), prefer one of these options instead of building wheels:
@@ -64,7 +64,7 @@ If you need to use local helper utilities included in this repository (for examp
 
 ```bash
 # from the step folder
-uv pip install -e ../../
+pip install -e ../../
 ```
 
 - Or add the repository `src/` directory to `PYTHONPATH` or `sys.path` in your notebooks (useful for ephemeral testing).

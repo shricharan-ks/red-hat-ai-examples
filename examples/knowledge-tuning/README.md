@@ -41,6 +41,14 @@ How to use this example
 4. Open `examples/knowledge-tuning/00_Setup.ipynb` and follow the setup steps (creating venvs and installing local packages as needed).
 5. Work through the notebooks step-by-step, from `01_Data_Preprocessing` to `05_Evaluation`.
 
-If you are using local editable installs (recommended during development), install local utilities from the repository root (for example: `uv pip install -e ../../`) or ensure `src/` is on your `PYTHONPATH`. Avoid relying on built wheel files inside the examples.
+If you are using local editable installs (recommended during development), create and activate a virtual environment, then install the local utilities in editable mode. For example:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ../../
+```
+
+Alternatively, ensure `src/` is on your `PYTHONPATH`. Avoid relying on built wheel files inside the examples.
 
 Next: start with [Data Preprocessing (step 01)](./01_Data_Preprocessing/README.md)

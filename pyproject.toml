@@ -12,11 +12,3 @@ dependencies = [
 requires = ["uv_build>=0.8.5,<0.9.0"]
 build-backend = "uv_build"
 
-
-[tool.uv.sources]
-ai_tools = { workspace= false }
-
-[tool.uv.workspace]
-members = [
-    "examples/knowledge-tuning/01_Data_Preprocessing",
-]

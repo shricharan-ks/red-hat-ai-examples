@@ -38,10 +38,10 @@ Environment variables (common examples)
 Install dependencies (pyproject)
 
 ```bash
-uv venv .venv
+python -m venv .venv
 source .venv/bin/activate
-uv pip install -r requirements.txt
-uv pip install -e .
+pip install -r requirements.txt
+pip install -e .
 ```
 
 How to run
