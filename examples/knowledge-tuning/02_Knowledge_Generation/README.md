@@ -71,7 +71,7 @@ How to run
 
 Prerequisites from earlier steps
 
-- Must have completed Step 01 and have `final_seed_data.jsonl` available.
+- Must have completed Step 01 and have `seed_data.jsonl` available.
 
 Debug & tips
 
