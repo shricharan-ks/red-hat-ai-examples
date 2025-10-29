@@ -1,6 +1,6 @@
 # Step 05 — Evaluation
 
-Navigation
+## Navigation
 
 - Overview: [Knowledge Tuning root](../README.md)
 - Step 01 — Data Preprocessing: [../01_Data_Preprocessing/README.md](../01_Data_Processing/README.md)
@@ -9,50 +9,32 @@ Navigation
 - Step 04 — Model Training: [../04_Model_Training/README.md](../04_Model_Training/README.md)
 - Step 05 — Evaluation (this page)
 
-Purpose
+## Purpose
 
 This step evaluates trained models and generated datasets against held-out test data. It computes metrics and produces human-readable reports for quality assessment.
 
-End-to-end flow inside this step
 
-- Input: trained model checkpoints (`output/step_04/`) and evaluation datasets → run evaluation scripts → metrics and reports written to `output/step_05/`
-
-Prerequisites
+## Prerequisites
 
 - A trained model checkpoint produced in Step 04.
 - Evaluation datasets (format depends on metric scripts).
 
-Inputs
+## Inputs
 
-- Model checkpoints in `output/step_04/`
-- Evaluation datasets in `output/` or a specified path
+- Base Model in `output/step_04/base_model/`
+- Fine tuned Model in `output/step_04/fine_tuned_model/`
 
-Outputs
-
-- Evaluation metrics and reports (e.g., accuracy, BLEU, human-review files) in `output/step_05/`
-
-Environment variables (common examples)
-
-- `OUTPUT_DATA_FOLDER` — experiment folder used by evaluation scripts
-
-Install dependencies (pyproject)
+## Install dependencies (pyproject)
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-pip install -e .
+pip install .
 ```
 
-How to run
+## How to run
 
-1. Activate the venv for this step.
-2. Open `Evaluation.ipynb` and run the notebook cells, or run evaluation scripts in this folder.
+1. Open `Evaluation.ipynb` and run the notebook cells in this folder.
 
-Debug & tips
 
-- Ensure the tokenizer and model used for evaluation match what was used during preprocessing and training.
-
-Next steps
+## Next steps
 
 - Review metrics and iterate on earlier steps (data, generation, mixing, or training) as needed.
