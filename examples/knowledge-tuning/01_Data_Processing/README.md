@@ -1,5 +1,5 @@
 
-# Step 01 — Data Preprocessing (Seed dataset generation)
+# Step 01 — Data Processing (Seed dataset generation)
 
 Navigation
 

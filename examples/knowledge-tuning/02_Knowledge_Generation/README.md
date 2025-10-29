@@ -4,7 +4,7 @@
 Navigation
 
 - Overview: [Knowledge Tuning root](../README.md)
-- Step 01 — Data Preprocessing: [../01_Data_Preprocessing/README.md](../01_Data_Preprocessing/README.md)
+- Step 01 — Data Preprocessing: [../01_Data_Preprocessing/README.md](../01_Data_Processing/README.md)
 - Step 02 — Knowledge Generation (this page)
 - Step 03 — Knowledge Mixing: [../03_Knowledge_Mixing/README.md](../03_Knowledge_Mixing/README.md)
 - Step 04 — Model Training: [../04_Model_Training/README.md](../04_Model_Training/README.md)
