@@ -14,6 +14,10 @@
 
 This step converts raw PDF documents into a small, curated seed dataset suitable for Synthetic Data Generation (SDG). The Jupyter notebook `Data_Preprocessing.ipynb` performs document conversion (via `docling`), chunking, selection of representative chunks, and generation of initial Q&A pairs.
 
+## Flow Diagram
+
+![Data Preprocessing Flow Diagram](../../../assets/usecase/knowledge-tuning/Data%20Preprocessing.png)
+
 
 ## Prerequisites
 

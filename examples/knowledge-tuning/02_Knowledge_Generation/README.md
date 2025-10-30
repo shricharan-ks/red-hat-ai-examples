@@ -14,6 +14,10 @@
 
 This step expands the curated seed examples produced by Step 01 into a larger set of Q&A pairs using LLMs and local utilities. It can be used to produce synthetic training examples or to augment existing datasets.
 
+## Flow Diagram
+
+![Knowledge Generation Flow Diagram](../../../assets/usecase/knowledge-tuning/Knowledge%20Genertaion.png)
+
 ## Prerequisites
 
 - `seed_data.jsonl` produced by Step 01 available under the step 01 output directory.

@@ -13,6 +13,10 @@
 
 This step demonstrates how to fine-tune or instruction-tune a student model using the mixed datasets produced earlier. Training may be done on a GPU-enabled workbench or a training cluster.
 
+## Flow Diagram
+
+![Model Training Flow Diagram](../../../assets/usecase/knowledge-tuning/Model%20Training.png)
+
 ## Prerequisites
 
 - Completion of Steps 01–03 and availability of `combined_cut_*.jsonl` files.
