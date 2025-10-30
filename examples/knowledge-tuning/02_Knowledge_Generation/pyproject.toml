@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "sdg-hub>=0.3.0",
+    "sdg-hub>=0.6.0",
     "datasets>=3.6.0",
     "python-dotenv>=1.1.1"
 ]
