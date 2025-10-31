@@ -1,14 +1,11 @@
 [project]
-name = "01-data-preprocessing"
+name = "Knowledge-Generation"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "datasets>=4.2.0",
-    "docling>=2.53.0",
-    "markdown-it-py>=4.0.0",
-    "tiktoken>=0.11.0",
+    "sdg-hub>=0.6.0",
+    "datasets>=3.6.0",
     "python-dotenv>=1.1.1"
 ]
-
