@@ -47,4 +47,8 @@ pip install .
 
 ## Next step
 
+
+[01 Data Preprocessing](./01_Data_Preprocessing/README.md)
+
+
 Proceed to [Knowledge Generation (step 02)](../02_Knowledge_Generation/README.md) once `seed_data.jsonl` is available.

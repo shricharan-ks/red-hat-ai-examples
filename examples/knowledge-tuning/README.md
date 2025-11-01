@@ -1,51 +1,40 @@
 
-# Knowledge Tuning — High level overview
+# Knowledge Tuning example
 
-This repository contains a self-contained Knowledge Tuning example using the InstructLab methodology. It demonstrates how to convert domain documents into a seed dataset, generate Q&A knowledge, mix and prepare training data, train knowledge-aware models, and evaluate results — all in a reproducible workbench environment.
+Welcome! This repository contains a self-contained Knowledge Tuning example that uses the InstructLab methodology.
 
-## Flow Diagram
-Usecase Flow Diagram
-![Usecase Flow Diagram](../../assets/usecase/knowledge-tuning/Overall%20Flow.png)
+By following the steps in this example, you learn how to inject domain-specific knowledge into an AI model, improving its accuracy and relevance for an example use case. 
 
+## Overview of the example end-to-end workflow 
 
-Detailed Flow Diagram
-![Detailed Flow Diagram](../../assets/usecase/knowledge-tuning/Detailed%20Flow.png)
+For this example workflow, you complete the following steps in your workbench environment:
 
-## Top-level flow (end-to-end)
+1. Data Preprocessing — Convert a URL page to structured Markdown (by using Docling), chunk text, and produce a small seed dataset.
+2. Knowledge Generation — Expand the seed dataset and generate more Q&A pairs by using an LLM (teacher model)
+3. Knowledge Mixing — Combine generated Q&A pairs and summaries into training mixes.
+4. Model Training — Fine-tune a model by using the prepared mixes.
+5. Evaluation — Run evaluation notebooks and metrics on held-out data.
 
+*Figure 1. End-to-end workflow diagram*
 
-1. Data Processing — convert PDFs to structured Md (docling), chunk text, and produce a small seed dataset (step 01)
-2. Knowledge Generation — expand seed examples into more Q&A pairs using an LLM(teacher model) (step 02)
-3. Knowledge Mixing — combine generated Q&A paris and summaries into training mixes (step 03)
-4. Model Training — fine-tune or instruction-tune a model using the prepared mixes (step 04)
-5. Evaluation — run evaluation notebooks and metrics on held-out data (step 05)
+![End-to-end workflow diagram](../../assets/usecase/knowledge-tuning/Overall%20Flow.png)
 
-Each step lives in a subfolder under `examples/knowledge-tuning/` and contains a notebook, a `pyproject.toml` for dependencies, and a `README.md` describing that step.
+*Figure 2. End-to-end workflow diagram*
 
-## RHOAI Workbench & platform specifications
+![End-to-end workflow diagram](../../assets/usecase/knowledge-tuning/Detailed%20Flow.png)
 
-These guidelines help you configure a Red Hat OpenShift AI (RHOAI) workbench that can run the notebooks reliably.
+## About the example use case
 
-- Workbench image: `Jupyter | Minimal | CUDA | Python 3.12`
-- GPU: Optional for preprocessing and mixing. Required/strongly recommended for model training (step 04) — at least one NVIDIA A100/40GB or similar for fine-tuning large models; for smaller student models an 8–16 GB GPU may suffice.
-- Persistent storage: A mounted persistent volume (PVC) for the workbench is required to store `examples/knowledge-tuning/output/` and large intermediate artifacts. Allocate 200+ GB for realistic datasets.
-- Accelerators: If using on-node inference/quantized student models, preferred accelerators are NVIDIA GPUs with CUDA support.
-- Environment variables: Workbench should provide a `.env` or secret injection mechanism for API keys and configuration. Example `.env.example` files are provided at usecase level and as well as step level.
+A Canadian bank wants its employees to use the bank’s internal chatbot app to obtain accurate information about the client identification methods required by the Financial Transactions and Reports Analysis Centre of Canada (FINTRAC).
 
+A general-purpose language model lacks the specific, nuanced knowledge of Canadian anti-money laundering (AML) regulations. When asked a detailed, specific question, it is likely to provide a generic or incorrect answer. 
 
-## How to use this example
+In this example, your goal is to fine-tune a base model on the official FINTRAC guidance so that it provides accurate, context-specific answers that reflect the actual regulations.
 
-1. Create or choose a RHOAI workbench with the recommended image.
-2. Attach a Persistent Volume with at least 200 GB.
-3. Clone this repository inside the workbench.
-4. Work through the notebooks step-by-step, from `01_Data_Preprocessing` to `05_Evaluation`. Each step has its own `pyproject.toml` file with required dependencies. The dependencies can be installed using `pip install .`
+## About the example Git repo structure
 
+The files for each step in the workflow are organized in subfolders of this Git repository, under `examples/knowledge-tuning/` folder. Each subfolder contains a notebook, a `pyproject.toml` file for dependencies, and a `README.md` file.
 
-## Tests and Validation
+## Next step
 
-This usecase has been tested on specific RHOAI version. 
-RHOAI Version : 2.25
-Last Test Run : October 2025
-
-## Next Steps
-start with [Data Preprocessing (step 01)](./01_Data_Processing/README.md)
+[00_Setup](./00_Setup/00_Setup_README.md)
