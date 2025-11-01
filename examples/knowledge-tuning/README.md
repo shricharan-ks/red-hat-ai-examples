@@ -7,7 +7,7 @@ By following the steps in this example, you learn how to inject domain-specific 
 
 ## Overview of the example end-to-end workflow 
 
-For this example workflow, you complete the following steps in your workbench environment:
+For this example workflow, you complete the following steps in your workbench environment, as illustrated in Figure 1 and Figure 2:
 
 1. Data Preprocessing — Convert a URL page to structured Markdown (by using Docling), chunk text, and produce a small seed dataset.
 2. Knowledge Generation — Expand the seed dataset and generate more Q&A pairs by using an LLM (teacher model)
@@ -33,7 +33,7 @@ In this example, your goal is to fine-tune a base model on the official FINTRAC 
 
 ## About the example Git repo structure
 
-The files for each step in the workflow are organized in subfolders of this Git repository, under `examples/knowledge-tuning/` folder. Each subfolder contains a notebook, a `pyproject.toml` file for dependencies, and a `README.md` file.
+The files for each step in the workflow are organized in subfolders of this Git repository, under the `examples/knowledge-tuning/` folder. Each subfolder contains a notebook, a `pyproject.toml` file for dependencies, and a `README.md` file.
 
 ## Next step
 
