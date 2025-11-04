@@ -138,8 +138,124 @@ This example has been validated with the following configurations:
       "nvidia.com/gpu": 1
       "memory": 64Gi
       "cpu": 4
-    base_image: quay.io/modh/training:py312-cuda128-torch280
+    base_image: quay.io/rhoai/odh-training-cuda128-torch28-py312-rhel9:rhoai-3.0
     env_vars:
       "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"
       "NCCL_DEBUG": "INFO"
     ```
+
+### Qwen2.5 7B Instruct - TableGPT Dataset - Training-Hub - 4x NVIDIA A100/80G
+
+* Infrastructure:
+  * OpenShift AI 3.0
+  * 8x NVIDIA-A100-SXM4-80GB
+* Configuration:
+    ```yaml
+  # ################################################################################
+  # # 🤖 Model + Data Paths                                                          #
+  # ################################################################################
+  base_model: "/mnt/shared/Qwen/Qwen2.5-7B-Instruct"
+  dataset_path: "/mnt/shared/table-gpt-data/train/train_All_5000.jsonl"
+  checkpoints_path: "/mnt/shared/checkpoints"
+  # for quicker multi-process loading of datasets set this to /dev/shm
+  data_output_path: "/mnt/shared/traininghub-sft-data"
+  
+  # ################################################################################
+  # # 🏋️‍♀️ Training Hyperparameters                                                     #
+  # ################################################################################
+  # Standard parameters
+  batch_size: 128
+  learning_rate: 5.0e-6  # You can also write this as 0.000005
+  num_epochs: 1
+  lr_scheduler: "cosine"
+  warmpup_steps: 0
+  seed: 42
+  
+  # ################################################################################
+  # # 🏎️ Performance Hyperparameters                                                  #
+  # ################################################################################
+  max_tokens_per_gpu: 10000
+  max_seq_len: 8192
+  
+  # ################################################################################
+  # # 💾 Checkpointing Settings                                                      #
+  # ################################################################################
+  checkpoint_at_epoch: true
+  save_full_optim_state: false
+  
+  # ###############################################################################
+  # # 🔥 TORCHRUN SETTINGS will be injected automatically by Kubeflow Trainer      #
+  # ###############################################################################
+    ```
+* Job:
+    ```yaml
+    num_workers: 4
+    num_procs_per_worker: 1
+    resources_per_worker:
+      "nvidia.com/gpu": 1
+      "memory": 64Gi
+      "cpu": 4
+    base_image: quay.io/rhoai/odh-training-cuda128-torch28-py312-rhel9:rhoai-3.0
+    env_vars:
+      "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"
+      "NCCL_DEBUG": "INFO"
+    ```
+
+
+### Qwen2.5 14B Instruct - TableGPT Dataset - Training-Hub - 4x NVIDIA A100/80G
+
+* Infrastructure:
+  * OpenShift AI 3.0
+  * 8x NVIDIA-A100-SXM4-80GB
+* Configuration:
+    ```yaml
+  # ################################################################################
+  # # 🤖 Model + Data Paths                                                          #
+  # ################################################################################
+  base_model: "/mnt/shared/Qwen/Qwen2.5-14B-Instruct"
+  dataset_path: "/mnt/shared/table-gpt-data/train/train_All_5000.jsonl"
+  checkpoints_path: "/mnt/shared/checkpoints"
+  # for quicker multi-process loading of datasets set this to /dev/shm
+  data_output_path: "/mnt/shared/traininghub-sft-data"
+  
+  # ################################################################################
+  # # 🏋️‍♀️ Training Hyperparameters                                                     #
+  # ################################################################################
+  # Standard parameters
+  batch_size: 128
+  learning_rate: 5.0e-6  # You can also write this as 0.000005
+  num_epochs: 1
+  lr_scheduler: "cosine"
+  warmpup_steps: 0
+  seed: 42
+  
+  # ################################################################################
+  # # 🏎️ Performance Hyperparameters                                                  #
+  # ################################################################################
+  max_tokens_per_gpu: 10000
+  max_seq_len: 8192
+  
+  # ################################################################################
+  # # 💾 Checkpointing Settings                                                      #
+  # ################################################################################
+  checkpoint_at_epoch: true
+  save_full_optim_state: false
+  
+  # ###############################################################################
+  # # 🔥 TORCHRUN SETTINGS will be injected automatically by Kubeflow Trainer      #
+  # ###############################################################################
+    ```
+* Job:
+    ```yaml
+    num_workers: 4
+    num_procs_per_worker: 1
+    resources_per_worker:
+      "nvidia.com/gpu": 1
+      "memory": 64Gi
+      "cpu": 4
+    base_image: quay.io/rhoai/odh-training-cuda128-torch28-py312-rhel9:rhoai-3.0
+    env_vars:
+      "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"
+      "NCCL_DEBUG": "INFO"
+    ```
+
