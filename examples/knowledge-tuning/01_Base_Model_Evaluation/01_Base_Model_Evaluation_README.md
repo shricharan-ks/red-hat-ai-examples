@@ -3,12 +3,14 @@
 
 ## Navigation
 
-- Overview: [Knowledge Tuning root](../README.md)
-- Step 01 — Data Preprocessing (this page)
-- Step 02 — Knowledge Generation: [../02_Knowledge_Generation/README.md](../02_Knowledge_Generation/README.md)
-- Step 03 — Knowledge Mixing: [../03_Knowledge_Mixing/README.md](../03_Knowledge_Mixing/README.md)
-- Step 04 — Model Training: [../04_Model_Training/README.md](../04_Model_Training/README.md)
-- Step 05 — Evaluation: [../05_Evaluation/README.md](../05_Evaluation/README.md)
+- Overview — [Knowledge Tuning](../README.md)
+- Step 00 — [Setup](../00_Setup/00_Setup_README.md)
+- Step 01 — Base Model Evaluation
+- Step 02 — [Data Processing](../02_Data_Processing/02_Data_Processing_README.md)
+- Step 03 — [Knowledge Generation](../03_Knowledge_Generation/03_Knowledge_Generation_README.md)
+- Step 04 — [Knowledge Mixing](../04_Knowledge_Mixing/04_Knowledge_Mixing_README.md)
+- Step 05 — [Model Training](../05_Model_Training/05_Model_Training_README.md)
+- Step 06 — [Evaluation](../06_Evaluation/06_Evaluation_README.md)
 
 ## Purpose
 
@@ -30,7 +32,6 @@ This step converts raw PDF documents into a small, curated seed dataset suitable
 - `output/step_01/chunks.jsonl` — all chunks
 - `output/step_01/seed_data.jsonl` — final seed dataset
 
-
 ## Install dependencies (pyproject)
 
 Each step contains a `pyproject.toml` describing the Python dependencies. To install them in a workbench:
@@ -42,13 +43,9 @@ pip install .
 
 ## How to run
 
-1. Open `Data_Preprocessing.ipynb` in the workbench JupyterLab.
-2. Confirm environment variables are set (via workbench secrets or a `.env` file).
+1. Confirm environment variables are set via workbench secrets or `.env` file.
+2. Open the [Base_Model_Evaluaion.ipynb](./Base_Model_Evaluaion.ipynb) file in JupyterLab and follow the instructions directly in the notebook.
 
 ## Next step
 
-
-[01 Data Preprocessing](./01_Data_Preprocessing/README.md)
-
-
-Proceed to [Knowledge Generation (step 02)](../02_Knowledge_Generation/README.md) once `seed_data.jsonl` is available.
+Proceed to [Data Processing](../02_Data_Processing/02_Data_Processing_README.md) after the base model has been evaluated.

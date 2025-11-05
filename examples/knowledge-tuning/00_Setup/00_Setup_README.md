@@ -1,5 +1,18 @@
 
-# Set up your working environment
+# Step 00 — Setup
+
+## Navigation
+
+- Overview — [Knowledge Tuning](../README.md)
+- Step 00 — Setup
+- Step 01 — [Base Model Evaluation](../01_Base_Model_Evaluation/01_Base_Model_Evaluation_README.md)
+- Step 02 — [Data Processing](../02_Data_Processing/02_Data_Processing_README.md)
+- Step 03 — [Knowledge Generation](../03_Knowledge_Generation/03_Knowledge_Generation_README.md)
+- Step 04 — [Knowledge Mixing](../04_Knowledge_Mixing/04_Knowledge_Mixing_README.md)
+- Step 05 — [Model Training](../05_Model_Training/05_Model_Training_README.md)
+- Step 06 — [Evaluation](../06_Evaluation/06_Evaluation_README.md)
+
+## Set up your working environment
 
 To use the Knowledge Tuning example, follow these steps to set up your working environment on your Red Hat OpenShift AI cluster:
 
@@ -8,41 +21,39 @@ To use the Knowledge Tuning example, follow these steps to set up your working e
 3. [Create a workbench](#create-a-workbench)
 4. [Clone the example Git repository](#clone-the-example-git-repository)
 
-
 ## Configure resources on the OpenShift cluster
 
 Ask your OpenShift cluster administrator to configure your cluster as follows:
 
-- **GPUs:** GPUs are optional for the preprocessing and mixing notebooks. In the model training step,  fine-tuning large models requires at least one NVIDIA A100/40GB or similar. Training smaller student models requires 8–16 GB GPU.
+- **GPUs:** GPUs are optional for the preprocessing and mixing notebooks. In the model training step, fine-tuning large models requires at least one NVIDIA A100/40GB or similar. Training smaller student models requires 8–16 GB GPU.
 
-- **Persisent Volumes:** Attach a persistent volume with at least 200 GB.
-
+- **Persistent Volumes:** Attach a persistent volume with at least 200 GB.
 
 ## Create a project
 
-To implement an AI workflow in OpenShift AI, you must create a project. Projects help your team to organize and work together on resources within separated namespaces. From a project you can create many workbenches, each with their own IDE environment (for example, JupyterLab), and each with their own connections and cluster storage. 
+To implement an AI workflow in OpenShift AI, you must create a project. Projects help your team to organize and work together on resources within separated namespaces. From a project you can create many workbenches, each with their own IDE environment (for example, JupyterLab), and each with their own connections and cluster storage.
 
 ### Prerequisites
 
-* You have logged in to Red Hat OpenShift AI.
+- You have logged in to Red Hat OpenShift AI.
 
 ### Procedure
 
-1. On the navigation menu, select *Projects*. This page lists any existing projects that you have access to.
+1. On the navigation menu, select **Projects**. This page lists any existing projects that you have access to.
 
-2. Click *Create project*. 
+2. Click **Create project**.
 
-3. In the *Create project* modal, enter a display name and description.
+3. In the **Create project** modal, enter a display name and description.
 
-4. Click *Create*.
+4. Click **Create**.
 
 ### Verification
 
-You can see your project's initial state. 
+You can see your project's initial state.
 
 ## Create a workbench
 
-A workbench is an instance of your development and experimentation environment. When you create a workbench, you select a workbench image that has the tools and libraries that you need for developing models. 
+A workbench is an instance of your development and experimentation environment. When you create a workbench, you select a workbench image that has the tools and libraries that you need for developing models.
 
 ### Prerequisites
 
@@ -50,13 +61,13 @@ A workbench is an instance of your development and experimentation environment. 
 
 ### Procedure
 
-1. Navigate to the project detail page for the project that you created in **Create a project**.
+1. Navigate to the project detail page for the project that you created in *Create a project*.
 
 2. Click the **Workbenches** tab, and then click **Create workbench**.
 
 3. Fill out the name and description.
 
-   Red Hat OpenShift AI provides several supported workbench images. In the **Workbench image** section, you can select one of the default images or a custom image that an administrator has set up for you. the **Jupyter | Minimal | CUDA | Python 3.12**  has the libraries needed for this example.
+   Red Hat OpenShift AI provides several supported workbench images. In the **Workbench image** section, you can select one of the default images or a custom image that an administrator has set up for you. The **Jupyter | Minimal | CUDA | Python 3.12**  has the libraries needed for this example.
 
 4. Select the latest **Jupyter | Minimal | CUDA | Python 3.12** image.
 
@@ -68,7 +79,7 @@ A workbench is an instance of your development and experimentation environment. 
 It looks like - for environment variables - they need to set these at the notebook level rather than here in the workbench - TBD
 -->
 
-8. Click **Create workbench**.
+7. Click **Create workbench**.
 
 ### Verification
 
@@ -82,7 +93,7 @@ The JupyterLab environment is a web-based environment, but everything you do ins
 
 ### Prerequisites
 
-You created a workbench, as described in *Creating a workbench*.
+You created a workbench, as described in *Create a workbench*.
 
 ### Procedure
 
@@ -94,25 +105,23 @@ You created a workbench, as described in *Creating a workbench*.
 
 2. Bring the content of this example inside your JupyterLab environment:
 
-   a. On the toolbar, click the *Git Clone* icon:
+   a. On the toolbar, click the **Git Clone** icon:
 
-   b. Enter the following example Git *https* URL:
+   b. Enter the following example Git **https** URL: <https://github.com/red-hat-data-services/red-hat-ai-examples.git>
 
-   https://github.com/red-hat-ai-examples/knowledge-tuning
-
-   c. Select the *Include submodules* option, and then click *Clone*.
+   c. Select the **Include submodules** option, and then click **Clone**.
 
    <!-- To test - might need steps d-g since they are using the main branch
    -->
-   d. In the file browser, double-click the newly-created *knowledge-tuning* folder.
+   d. In the file browser, double-click the folders to browse to the newly-created **red-hat-ai-examples/examples/knowledge-tuning** folder.
 
-   e. In the left navigation bar, click the *Git* icon, and then click *Current Branch* to expand the branches and tags selector panel.
+   e. In the left navigation bar, click the **Git** icon, and then click **Current Branch** to expand the branches and tags selector panel.
 
-   f.  On the *Branches* tab, in the *Filter* field, enter *main*.
+   f.  On the **Branches** tab, in the **Filter** field, enter **main**.
 
-   g. Select *origin/main}*. 
+   g. Select **origin/main**.
 
-   The current branch changes to *main*.
+   The current branch changes to **main**.
 
 ### Verification
 
@@ -122,4 +131,4 @@ Congratulations! Your workbench is configured and ready for the knowledge traini
 
 ### Next step
 
-[Base Model Evaluation](./01_Base_Model_Evaluation/01_Base_Model_Evaluation_README.md)
+Proceed to [Base Model Evaluation](../01_Base_Model_Evaluation/01_Base_Model_Evaluation_README.md) after configuring the environment.

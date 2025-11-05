@@ -1,14 +1,16 @@
 
-# Step 01 — Data Processing (Seed dataset generation)
+# Step 02 — Data Processing (Seed dataset generation)
 
 ## Navigation
 
-- Overview: [Knowledge Tuning root](../README.md)
-- Step 01 — Data Preprocessing (this page)
-- Step 02 — Knowledge Generation: [../02_Knowledge_Generation/README.md](../02_Knowledge_Generation/README.md)
-- Step 03 — Knowledge Mixing: [../03_Knowledge_Mixing/README.md](../03_Knowledge_Mixing/README.md)
-- Step 04 — Model Training: [../04_Model_Training/README.md](../04_Model_Training/README.md)
-- Step 05 — Evaluation: [../05_Evaluation/README.md](../05_Evaluation/README.md)
+- Overview — [Knowledge Tuning](../README.md)
+- Step 00 — [Setup](../00_Setup/00_Setup_README.md)
+- Step 01 — [Base Model Evaluation](../01_Base_Model_Evaluation/01_Base_Model_Evaluation_README.md)
+- Step 02 — Data Processing
+- Step 03 — [Knowledge Generation](../03_Knowledge_Generation/03_Knowledge_Generation_README.md)
+- Step 04 — [Knowledge Mixing](../04_Knowledge_Mixing/04_Knowledge_Mixing_README.md)
+- Step 05 — [Model Training](../05_Model_Training/05_Model_Training_README.md)
+- Step 06 — [Evaluation](../06_Evaluation/06_Evaluation_README.md)
 
 ## Purpose
 
@@ -17,7 +19,6 @@ This step converts raw PDF documents into a small, curated seed dataset suitable
 ## Flow Diagram
 
 ![Data Preprocessing Flow Diagram](../../../assets/usecase/knowledge-tuning/Data%20Preprocessing.png)
-
 
 ## Prerequisites
 
@@ -30,10 +31,9 @@ This step converts raw PDF documents into a small, curated seed dataset suitable
 
 ## Outputs
 
-- `output/step_01/docling_output/` — docling JSON files
-- `output/step_01/chunks.jsonl` — all chunks
-- `output/step_01/seed_data.jsonl` — final seed dataset
-
+- `output/step_02/docling_output/` — Docling JSON files
+- `output/step_02/chunks.jsonl` — All chunks
+- `output/step_02/seed_data.jsonl` — Final seed dataset
 
 ## Install dependencies (pyproject)
 
@@ -46,9 +46,10 @@ pip install .
 
 ## How to run
 
-1. Open `Data_Preprocessing.ipynb` in the workbench JupyterLab.
-2. Confirm environment variables are set (via workbench secrets or a `.env` file).
+1. Confirm environment variables are set via workbench secrets or `.env` file.
+2. Open the [Data_Processing.ipynb](./Data_Processing.ipynb) file in JupyterLab and follow the instructions directly in the notebook.
+3. Review the generated files in `output/step_02/`.
 
 ## Next step
 
-Proceed to [Knowledge Generation (step 02)](../02_Knowledge_Generation/README.md) once `seed_data.jsonl` is available.
+Proceed to [Knowledge Generation](../03_Knowledge_Generation/03_Knowledge_Generation_README.md) once `seed_data.jsonl` is available.
