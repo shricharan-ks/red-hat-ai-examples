@@ -1,13 +1,15 @@
-# Step 03 — Knowledge Mixing (prepare training mixes)
+# Step 04 — Knowledge Mixing (Prepare training mixes)
 
 ## Navigation
 
-- Overview: [Knowledge Tuning root](../README.md)
-- Step 01 — Data Preprocessing: [../01_Data_Preprocessing/README.md](../01_Data_Processing/README.md)
-- Step 02 — Knowledge Generation: [../02_Knowledge_Generation/README.md](../02_Knowledge_Generation/README.md)
-- Step 03 — Knowledge Mixing (this page)
-- Step 04 — Model Training: [../04_Model_Training/README.md](../04_Model_Training/README.md)
-- Step 05 — Evaluation: [../05_Evaluation/README.md](../05_Evaluation/README.md)
+- Overview — [Knowledge Tuning](../README.md)
+- Step 00 — [Setup](../00_Setup/00_Setup_README.md)
+- Step 01 — [Base Model Evaluation](../01_Base_Model_Evaluation/01_Base_Model_Evaluation_README.md)
+- Step 02 — [Data Processing](../02_Data_Processing/02_Data_Processing_README.md)
+- Step 03 — [Knowledge Generation](../03_Knowledge_Generation/03_Knowledge_Generation_README.md)
+- Step 04 — Knowledge Mixing
+- Step 05 — [Model Training](../05_Model_Training/05_Model_Training_README.md)
+- Step 06 — [Evaluation](../06_Evaluation/06_Evaluation_README.md)
 
 ## Purpose
 
@@ -19,23 +21,23 @@ This step mixes generated Q&A, extractive/detailed summaries, and other artifact
 
 ## Prerequisites
 
-- Completion of Step 01 (seed dataset) and Step 02 (QnA generation).
+- Completion of Step 02 (seed dataset) and Step 03 (QnA generation).
 - This step's Python dependencies installed (see `pyproject.toml` in this folder).
 
 ## Inputs
 
-- `output/step_02/*` summary folders
+- `output/step_03/*` — Summary folders
 
 ## Outputs
 
-- `output/step_03/combined_cut_{N}x.jsonl` — mixed datasets for each cut size
+- `output/step_03/combined_cut_{N}x.jsonl` — Mixed datasets for each cut size
 
 ## Environment variables (common examples)
 
-- `TOKENIZER_MODEL` — tokenizer/model for token counting
+- `TOKENIZER_MODEL` — Tokenizer/model for token counting
 - `SAVE_GPT_OSS_FORMAT` - Boolean value to save in GPT-OSS format (e.g. `false`)
-- `CUT_SIZES` — comma-separated list of cut sizes to generate (e.g. `10,20`)
-- `QA_PER_DOC` — number of Q&A pairs per document
+- `CUT_SIZES` — Comma-separated list of cut sizes to generate (e.g. `10,20`)
+- `QA_PER_DOC` — Number of Q&A pairs per document
 
 ## Install dependencies (pyproject)
 
@@ -43,15 +45,15 @@ This step mixes generated Q&A, extractive/detailed summaries, and other artifact
 pip install .
 ```
 
+## How to run
 
-# How to run
-
-1. Open `Knowledge_Mixing.ipynb` in the workbench and run cells in order.
-2. Confirm that `output/step_03/` contains `combined_cut_*.jsonl` files.
+1. Confirm environment variables are set via workbench secrets or `.env` file.
+2. Open the [Knowledge_Mixing.ipynb](./Knowledge_Mixing.ipynb) file in JupyterLab and follow the instructions directly in the notebook.
+3. Confirm that `output/step_04/` contains `combined_cut_*.jsonl` files.
 
 ## Prerequisites from earlier steps
 
-- Must have generated summary artifacts in Step 02.
+- Must have generated summary artifacts in Step 03.
 
 ## Debug & tips
 
@@ -59,4 +61,4 @@ pip install .
 
 ## Next step
 
-Proceed to [Model Training (step 04)](../04_Model_Training/README.md).
+Proceed to [Model Training](../05_Model_Training/05_Model_Training_README.md).
