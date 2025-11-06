@@ -1,8 +1,7 @@
 [project]
 name = "Data_Preprocessing"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+description = "A project for preprocessing the data for SDG"
 requires-python = ">=3.12"
 dependencies = [
     "datasets>=4.2.0",

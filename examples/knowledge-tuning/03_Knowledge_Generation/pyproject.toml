@@ -1,8 +1,7 @@
 [project]
 name = "Knowledge-Generation"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+description = "A project for generation of synthetic data"
 requires-python = ">=3.12"
 dependencies = [
     "sdg-hub>=0.6.0",

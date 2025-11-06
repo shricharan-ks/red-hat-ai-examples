@@ -1,8 +1,7 @@
 [project]
 name = "Evaluation"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+description = "A project to evaluate and compare the finetuned and base models"
 requires-python = ">=3.12"
 dependencies = [
     "transformers>=4.57.1",

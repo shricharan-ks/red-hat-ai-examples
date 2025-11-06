@@ -1,8 +1,7 @@
 [project]
 name = "Model_Training"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+description = "A project for training the model using training dataset"
 requires-python = ">=3.12"
 dependencies = [
     "training-hub[cuda]>=0.3.0",

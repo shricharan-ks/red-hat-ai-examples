@@ -1,8 +1,7 @@
 [project]
 name = "Knowledge-Mixing"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+description = "A project for mixing the synthetic datasets to training ready dataset"
 requires-python = ">=3.12"
 dependencies = [
     "datasets>=4.2.0",
