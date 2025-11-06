@@ -14,7 +14,7 @@
 
 ## Purpose
 
-This step converts raw PDF documents into a small, curated seed dataset suitable for Synthetic Data Generation (SDG). The Jupyter notebook `Data_Preprocessing.ipynb` performs document conversion (via `docling`), chunking, selection of representative chunks, and generation of initial Q&A pairs.
+Establish a baseline by evaluating the base model's performance on relevant tasks prior to any fine-tuning, enabling objective comparison after knowledge tuning.
 
 
 ## Prerequisites
