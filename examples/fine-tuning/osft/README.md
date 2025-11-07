@@ -72,8 +72,7 @@ osft(..., use_processed_dataset=True)
 
 | Component | Configuration | GPU per node | Total GPU | GPU Type (per GPU) | CPU | Memory | Flash Attention |
 |-----------|--------------|---|---|------------|-----|--------|-----------------|
-| Training Pods (Example Default) | 2 nodes × 2 GPUs | 2 | 4 | NVIDIA L40/L40S or equivalent | 4 cores/pod | 24Gi/pod | Required |
-| Training Pods (Minimum) | 1 node × 2 GPUs | 2 | 2 | NVIDIA L40/L40S or equivalent | 4 cores/pod | 24Gi/pod | Required |
+| Training Pods | 2 nodes × 2 GPUs | 2 | 4 | NVIDIA L40/L40S or equivalent | 4 cores/pod | 32Gi/pod | Required |
 
 > [!NOTE]
 > - This example was tested on 2 nodes x 2 GPUs provided by L40S however, it will work on smaller/larger configurations.
@@ -87,7 +86,6 @@ osft(..., use_processed_dataset=True)
 |------------|----------|-----|-----|--------|-------|
 | Minimal CPU Python 3.12 | CPU-based evaluation | None | 6 cores | 24Gi | Slower evaluation |
 | Minimal CUDA Python 3.12 (Example Default) | NVIDIA GPU evaluation (Example Default) | 1× GPU | 2 cores | 8Gi | Recommended for faster testing |
-| Minimal ROCm Python 3.12 | AMD GPU evaluation | 1× GPU | 2 cores | 8Gi | AMD accelerator support |
 
 > [!NOTE]
 > - Workbench GPU is optional but recommended for faster model evaluation
@@ -113,7 +111,7 @@ osft(..., use_processed_dataset=True)
 * Once the project is created, click on _Create a workbench_:
 ![](./docs/03.png)
 * Then create a workbench with the following settings:
-    * Select the `Jupyter | Minimal | CPU | Python 3.12` notebook image if you want to run CPU based evaluation, `Jupyter | Minimal | CUDA | Python 3.12` for NVIDIA GPUs evaluation or `Jupyter | Minimal | ROCm | Python 3.12` for AMD GPUs evaluation and `Medium` container size:
+    * Select the `Jupyter | Minimal | CPU | Python 3.12` notebook image if you want to run CPU based evaluation, `Jupyter | Minimal | CUDA | Python 3.12` for NVIDIA GPUs evaluation and `Medium` container size:
     ![](./docs/04a.png)
     * Add an accelerator if you plan on evaluating your model on GPUs (faster):
     ![](./docs/04b.png)
