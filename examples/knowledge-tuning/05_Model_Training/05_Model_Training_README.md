@@ -1,56 +1,43 @@
-# Step 05 — Model Training
+# Step 5: Model Training
 
 ## Navigation
 
-- Overview — [Knowledge Tuning](../README.md)
-- Step 00 — [Setup](../00_Setup/00_Setup_README.md)
-- Step 01 — [Base Model Evaluation](../01_Base_Model_Evaluation/01_Base_Model_Evaluation_README.md)
-- Step 02 — [Data Processing](../02_Data_Processing/02_Data_Processing_README.md)
-- Step 03 — [Knowledge Generation](../03_Knowledge_Generation/03_Knowledge_Generation_README.md)
-- Step 04 — [Knowledge Mixing](../04_Knowledge_Mixing/04_Knowledge_Mixing_README.md)
-- Step 05 — Model Training
-- Step 06 — [Evaluation](../06_Evaluation/06_Evaluation_README.md)
+- [Knowledge Tuning Overview](../README.md)
+- [Setup](../00_Setup/00_Setup_README.md)
+- [Step 1: Base Model Evaluation](../01_Base_Model_Evaluation/01_Base_Model_Evaluation_README.md)
+- [Step 2: Data Processing](../02_Data_Processing/02_Data_Processing_README.md)
+- [Step 3: Knowledge Generation](../03_Knowledge_Generation/03_Knowledge_Generation_README.md)
+- [Step 4: Knowledge Mixing](../04_Knowledge_Mixing/04_Knowledge_Mixing_README.md)
+- Step 5: Model Training
+- [Step 6: Evaluation](../06_Evaluation/06_Evaluation_README.md)
 
-## Purpose
+## Fine tuning the model
 
-This step demonstrates how to fine-tune or instruction-tune a student model using the mixed datasets produced earlier. Training may be done on a GPU-enabled workbench or a training cluster.
-
-## Flow Diagram
+This step demonstrates how to fine-tune or instruction-tune a student model using the mixed datasets produced earlier.
+Training may be done on a GPU-enabled workbench or a training cluster.
 
 ![Model Training Flow Diagram](../../../assets/usecase/knowledge-tuning/Model%20Training.png)
 
-## Prerequisites
+### Prerequisites
 
-- Completion of Steps 01–04 and availability of `combined_cut_*.jsonl` files.
-- GPU-enabled workbench recommended for training (see top-level RHOAI specs).
+- Previous sections successfully completed in order
+- Environment variables are set via workbench secrets or `.env` file. See [.env.example](./.env.example) for reference.
+- GPU-enabled workbench recommended for training. See [Setup](../00_Setup/00_Setup_README.md) for details.
 
-## Inputs
+#### Environment variables
 
-- `output/step_04/combined_cut_*.jsonl`
+- `STUDENT_MODEL` — Model to be fine tune
 
-## Outputs
+### Procedure
+
+1. Open the [Model_Training.ipynb](./Model_Training.ipynb) file in JupyterLab and follow the instructions directly in
+the notebook, or run your training script/entrypoint.
+
+### Verification
+
+After completing the notebook instructions, the following artifacts are generated.
 
 - `output/step_05/checkpoints/` — Model checkpoints and training logs
-
-## Environment variables (common examples)
-
-- `STUDENT_MODEL` - The model that is to be fine tuned.
-
-## Install dependencies (pyproject)
-
-```bash
-pip install .
-```
-
-## How to run
-
-1. Confirm environment variables are set via workbench secrets or `.env` file.
-2. Open the [Model_Training.ipynb](./Model_Training.ipynb) file in JupyterLab and follow the instructions directly in the notebook, or run your training script/entrypoint.
-3. Review the output files in `output/step_05/`.
-
-## Prerequisites from earlier steps
-
-- Ensure combined datasets were built in Step 04 `combined_cut_*.jsonl` is available. Use different cut size to test the training.
 
 ## Debug & tips
 
@@ -58,4 +45,4 @@ pip install .
 
 ## Next step
 
-Proceed to [Evaluation](../06_Evaluation/06_Evaluation_README.md).
+Proceed to [Step 6: Evaluation](../06_Evaluation/06_Evaluation_README.md).

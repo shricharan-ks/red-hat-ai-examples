@@ -1,59 +1,44 @@
-# Step 04 — Knowledge Mixing (Prepare training mixes)
+# Step 4: Knowledge Mixing
 
 ## Navigation
 
-- Overview — [Knowledge Tuning](../README.md)
-- Step 00 — [Setup](../00_Setup/00_Setup_README.md)
-- Step 01 — [Base Model Evaluation](../01_Base_Model_Evaluation/01_Base_Model_Evaluation_README.md)
-- Step 02 — [Data Processing](../02_Data_Processing/02_Data_Processing_README.md)
-- Step 03 — [Knowledge Generation](../03_Knowledge_Generation/03_Knowledge_Generation_README.md)
-- Step 04 — Knowledge Mixing
-- Step 05 — [Model Training](../05_Model_Training/05_Model_Training_README.md)
-- Step 06 — [Evaluation](../06_Evaluation/06_Evaluation_README.md)
+- [Knowledge Tuning Overview](../README.md)
+- [Setup](../00_Setup/00_Setup_README.md)
+- [Step 1: Base Model Evaluation](../01_Base_Model_Evaluation/01_Base_Model_Evaluation_README.md)
+- [Step 2: Data Processing](../02_Data_Processing/02_Data_Processing_README.md)
+- [Step 3: Knowledge Generation](../03_Knowledge_Generation/03_Knowledge_Generation_README.md)
+- Step 4: Knowledge Mixing
+- [Step 5: Model Training](../05_Model_Training/05_Model_Training_README.md)
+- [Step 6: Evaluation](../06_Evaluation/06_Evaluation_README.md)
 
-## Purpose
+## Knowledge mixing and preparing training mixes
 
-This step mixes generated Q&A, extractive/detailed summaries, and other artifacts into training-ready datasets. It prepares different cut sizes and mixes (upsampling, downsampling) that are consumed by model training workflows.
-
-## Flow Diagram
+This step mixes generated Q&A, extractive/detailed summaries, and other artifacts into training-ready datasets.
+It prepares different cut sizes and mixes (upsampling, downsampling) that are consumed by model training workflows.
 
 ![Knowledge Mixing Flow Diagram](../../../assets/usecase/knowledge-tuning/Knowledge%20Mixing.png)
 
-## Prerequisites
+### Prerequisites
 
-- Completion of Step 02 (seed dataset) and Step 03 (QnA generation).
-- This step's Python dependencies installed (see `pyproject.toml` in this folder).
+- Previous sections successfully completed in order
+- Environment variables are set via workbench secrets or `.env` file. See [.env.example](./.env.example) for reference.
 
-## Inputs
-
-- `output/step_03/*` — Summary folders
-
-## Outputs
-
-- `output/step_03/combined_cut_{N}x.jsonl` — Mixed datasets for each cut size
-
-## Environment variables (common examples)
+#### Environment variables
 
 - `TOKENIZER_MODEL` — Tokenizer/model for token counting
-- `SAVE_GPT_OSS_FORMAT` - Boolean value to save in GPT-OSS format (e.g. `false`)
+- `SAVE_GPT_OSS_FORMAT` — Boolean value to save in GPT-OSS format (e.g. `false`)
 - `CUT_SIZES` — Comma-separated list of cut sizes to generate (e.g. `10,20`)
 - `QA_PER_DOC` — Number of Q&A pairs per document
 
-## Install dependencies (pyproject)
+### Procedure
 
-```bash
-pip install .
-```
+1. Open the [Knowledge_Mixing.ipynb](./Knowledge_Mixing.ipynb) file in JupyterLab and follow the instructions directly in the notebook.
 
-## How to run
+### Verification
 
-1. Confirm environment variables are set via workbench secrets or `.env` file.
-2. Open the [Knowledge_Mixing.ipynb](./Knowledge_Mixing.ipynb) file in JupyterLab and follow the instructions directly in the notebook.
-3. Confirm that `output/step_04/` contains `combined_cut_*.jsonl` files.
+After completing the notebook instructions, the following artifacts are generated.
 
-## Prerequisites from earlier steps
-
-- Must have generated summary artifacts in Step 03.
+- `output/step_03/combined_cut_{N}x.jsonl` — Mixed datasets for each cut size
 
 ## Debug & tips
 
@@ -61,4 +46,4 @@ pip install .
 
 ## Next step
 
-Proceed to [Model Training](../05_Model_Training/05_Model_Training_README.md).
+Proceed to [Step 5: Model Training](../05_Model_Training/05_Model_Training_README.md).

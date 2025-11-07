@@ -7,7 +7,7 @@ By following the steps in this example, you learn how to inject domain-specific 
 
 ## Overview of the example end-to-end workflow
 
-For this example workflow, you complete the following steps in your workbench environment, as illustrated in Figure 1 and Figure 2:
+For this example workflow, you complete the following steps sequentially in your workbench environment, as illustrated in Figure 1 and Figure 2:
 
 1. Data Preprocessing — Convert a URL page to structured Markdown (by using Docling), chunk text, and produce a small seed dataset.
 2. Knowledge Generation — Expand the seed dataset and generate more Q&A pairs by using an LLM (teacher model).
@@ -15,13 +15,13 @@ For this example workflow, you complete the following steps in your workbench en
 4. Model Training — Fine-tune a model by using the prepared mixes.
 5. Evaluation — Run evaluation notebooks and metrics on held-out data.
 
-*Figure 1. End-to-end workflow diagram*
+*Figure 1. End-to-end workflow overview*
 
-![End-to-end workflow diagram](../../assets/usecase/knowledge-tuning/Overall%20Flow.png)
+![End-to-end workflow overview diagram](../../assets/usecase/knowledge-tuning/Overall%20Flow.png)
 
-*Figure 2. End-to-end workflow diagram*
+*Figure 2. End-to-end workflow details*
 
-![End-to-end workflow diagram](../../assets/usecase/knowledge-tuning/Detailed%20Flow.png)
+![End-to-end workflow detailed diagram](../../assets/usecase/knowledge-tuning/Detailed%20Flow.png)
 
 ## About the example use case
 
@@ -33,8 +33,8 @@ In this example, your goal is to fine-tune a base model on the official FINTRAC 
 
 ## About the example Git repo structure
 
-The files for each step in the workflow are organized in subfolders of this Git repository, under the `examples/knowledge-tuning/` folder. Each subfolder contains a notebook, a `pyproject.toml` file for dependencies, and a `README.md` file.
+The files for each step in the workflow are organized in subfolders of this Git repository, under the `examples/knowledge-tuning/` folder. Each subfolder contains a notebook, a `pyproject.toml` file for dependencies, an `.env.example` file for environment variables, and a `README.md` file.
 
 ## Next step
 
-Proceed to [00_Setup](./00_Setup/00_Setup_README.md) to configure the environment.
+Proceed to [Setup](./00_Setup/00_Setup_README.md).
