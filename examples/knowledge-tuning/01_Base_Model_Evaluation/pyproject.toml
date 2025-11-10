@@ -1,0 +1,12 @@
+[project]
+name = "Base_Model_Evaluation"
+version = "0.1.0"
+description = "Evaluating base language model before knowledge tuning"
+requires-python = ">=3.12"
+dependencies = [
+    "transformers>=4.57.1",
+    "torch==2.8.0",
+    "accelerate>=1.11.0",
+    "rich>=14.2.0",
+    "python-dotenv>=1.1.1",
+]
