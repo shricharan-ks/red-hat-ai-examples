@@ -1,0 +1,692 @@
+# PIPELINE DEFINITION
+# Name: knowledge-generation-pipeline
+# Description: Generate knowledge tuning datasets using SDG Hub
+components:
+  comp-create-seed-data-component:
+    executorLabel: exec-create-seed-data-component
+    outputDefinitions:
+      artifacts:
+        output_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-generate-detailed-summary-component:
+    executorLabel: exec-generate-detailed-summary-component
+    inputDefinitions:
+      artifacts:
+        input_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        output_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-generate-document-based-qa-component:
+    executorLabel: exec-generate-document-based-qa-component
+    inputDefinitions:
+      artifacts:
+        input_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        output_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-generate-extractive-summary-component:
+    executorLabel: exec-generate-extractive-summary-component
+    inputDefinitions:
+      artifacts:
+        input_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        output_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-generate-key-facts-component:
+    executorLabel: exec-generate-key-facts-component
+    inputDefinitions:
+      artifacts:
+        input_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        output_dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-merge-all-outputs-component:
+    executorLabel: exec-merge-all-outputs-component
+    inputDefinitions:
+      artifacts:
+        detailed_data:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        doc_qa_data:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        extractive_data:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        key_facts_data:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        merged_output:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+deploymentSpec:
+  executors:
+    exec-create-seed-data-component:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - create_seed_data_component
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'datasets' 'nest-asyncio'\
+          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.5'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef create_seed_data_component(\n    output_dataset: Output[Dataset]\n\
+          ):\n    \"\"\"Load or create seed data from QuALITY Benchmark dataset.\"\
+          \"\"\n    from datasets import load_dataset\n    import os\n    seed_data_path\
+          \ = os.getenv('SEED_DATA_PATH', 'seed_data.jsonl')\n    def create_seed_data_from_quality_benchmark(seed_data_path:\
+          \ str):\n        \"\"\"Create seed data from QuALITY Benchmark dataset and\
+          \ save to file.\"\"\"\n\n        print(\"Loading QuALITY Benchmark dataset...\"\
+          )\n        quality_corpus = load_dataset(\n            \"zitongyang/entigraph-quality-corpus\"\
+          , \n            split='train'\n        ).remove_columns(\n            ['entity',\
+          \ 'entigraph']\n        ).rename_columns(\n            {'raw': 'document',\
+          \ 'uid': 'document_outline'}\n        )\n\n        # Define seed examples\
+          \ for knowledge tuning\n        seed_examples = {\n            \"icl_document\"\
+          : (\n                \"The coastal town of Willow Creek, once renowned for\
+          \ its pristine beaches, now struggles with rampant pollution. Plastic debris\
+          \ and oil spills have devastated marine life, prompting a decline in tourism\
+          \ and fishing industries. Residents have organized weekly clean-up initiatives,\
+          \ but the scale of the problem overwhelms their efforts.\",\n          \
+          \      \"Technologists at the local university have developed an AI-powered\
+          \ buoy system to combat this. The buoys, equipped with solar panels and\
+          \ filtration technology, can identify and absorb oil spills while collecting\
+          \ microplastics. Data from the buoys is shared publicly, raising awareness\
+          \ and pressuring corporations to adopt sustainable practices. Though costly,\
+          \ the project has sparked hope for revitalizing the ecosystem and economy.\"\
+          \n            ),\n            \"icl_query_1\": \"How does the technological\
+          \ solution address the economic *and* environmental challenges highlighted\
+          \ in the document?\",\n            \"icl_query_2\": \"What implicit values\
+          \ or priorities do the community's actions (clean-up initiatives) and the\
+          \ technologists' project reflect, and how do these align or contrast?\"\
+          ,\n            \"icl_query_3\": \"Imagine the buoy project succeeds. What\
+          \ unintended consequences might arise from its impact, considering document's\
+          \ themes?\",\n            \"domain\": \"articles/essays\"\n        }\n\n\
+          \        quality_corpus = quality_corpus.map(lambda x: seed_examples)\n\n\
+          \        # Save to file\n        quality_corpus.to_json(seed_data_path,\
+          \ orient='records', lines=True)\n        print(f\"Created seed data at:\
+          \ {seed_data_path}\")\n\n        return quality_corpus\n\n    # Load seed\
+          \ data. If one is not provided, create it from the quality benchmark dataset.\n\
+          \    if not os.path.exists(seed_data_path):\n        print(f\"{seed_data_path}\
+          \ not found. Creating seed data...\")\n        quality_corpus = create_seed_data_from_quality_benchmark(seed_data_path=seed_data_path)\n\
+          \    else:\n        print(f\"Loading existing seed data from {seed_data_path}\"\
+          )\n        quality_corpus = load_dataset('json', data_files=seed_data_path,\
+          \ split='train')\n\n    # Subsample the seed data. Useful for debugging.\n\
+          \    subsample = int(os.getenv('SEED_DATA_SUBSAMPLE', '0'))\n    if subsample\
+          \ > 0:\n        quality_corpus = quality_corpus.select(range(subsample))\n\
+          \        print(f\"Subsampled to {subsample} samples\")\n\n    subsample\
+          \ = int(os.getenv('SEED_DATA_SUBSAMPLE', '0'))\n    if subsample > 0:\n\
+          \        quality_corpus = quality_corpus.select(range(min(subsample, len(quality_corpus))))\n\
+          \n    quality_corpus.to_json(output_dataset.path, orient='records', lines=True)\n\
+          \    print(f\"Saved seed data to: {output_dataset.path}\")\n\n"
+        image: image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/jupyter-minimal-cpu-py312-ubi9:2025.1
+    exec-generate-detailed-summary-component:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - generate_detailed_summary_component
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'datasets' 'nest-asyncio'\
+          \ 'sdg_hub[examples]'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.5' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef generate_detailed_summary_component(\n    input_dataset: Input[Dataset],\n\
+          \    output_dataset: Output[Dataset]\n):\n    \"\"\"Generate detailed summary\
+          \ knowledge tuning data.\"\"\"\n    from datasets import load_dataset\n\
+          \    import nest_asyncio\n    import os\n    from sdg_hub import Flow, FlowRegistry\n\
+          \n    nest_asyncio.apply()\n    model_provider = os.getenv('MODEL_PROVIDER',\
+          \ 'hosted_vllm')\n    enable_reasoning = os.getenv('ENABLE_REASONING', 'false').lower()\
+          \ in ('1', 'true', 'yes')\n    if model_provider == 'hosted_vllm':\n   \
+          \     hosted_model = os.getenv('VLLM_MODEL', 'hosted_vllm/meta-llama/Llama-3.3-70B-Instruct')\n\
+          \        api_base = os.getenv('API_BASE_URL', 'http://localhost:8000/v1')\n\
+          \        api_key = os.getenv('VLLM_API_KEY', 'EMPTY')\n    elif model_provider\
+          \ == 'openai':\n        hosted_model = f\"openai/{os.getenv('OPENAI_MODEL',\
+          \ 'google/gemini-2.5-flash-lite-preview-09-2025')}\"\n        api_base =\
+          \ os.getenv('API_BASE_URL', 'https://openrouter.ai/api/v1')\n        api_key\
+          \ = os.getenv('OPENAI_API_KEY', 'EMPTY')\n    number_of_summaries = int(os.getenv('NUMBER_OF_SUMMARIES',\
+          \ '50'))\n    max_concurrency = int(os.getenv('MAX_CONCURRENCY', '50'))\n\
+          \n    print(\"Loading input dataset...\")\n    quality_corpus = load_dataset('json',\
+          \ data_files=input_dataset.path, split='train')\n\n    print(f\"Generating\
+          \ detailed summaries for {len(quality_corpus)} documents...\")\n\n    FlowRegistry.discover_flows()\n\
+          \    flow_path = FlowRegistry.get_flow_path(\n        \"Detailed Summary\
+          \ Knowledge Tuning Dataset Generation Flow\"\n    )\n    flow = Flow.from_yaml(flow_path)\n\
+          \n    flow.set_model_config(\n        model=hosted_model,\n        api_base=api_base,\n\
+          \        api_key=api_key,\n        enable_reasoning=enable_reasoning,\n\
+          \    )\n\n    runtime_params = {\n        'gen_detailed_summary': {\n  \
+          \          'n': number_of_summaries\n        }\n    }\n\n    if enable_reasoning:\n\
+          \        runtime_params = {\n            'question_generation': {'max_tokens':\
+          \ 1024}, \n            'gen_detailed_summary': {\n                'n': number_of_summaries,\
+          \ \n                'max_tokens': 6000\n            }\n        }\n\n   \
+          \ print(\"Starting generation...\")\n    generated_data = flow.generate(\n\
+          \        quality_corpus, \n        runtime_params=runtime_params, \n   \
+          \     max_concurrency=max_concurrency\n    )\n\n    generated_data.to_json(output_dataset.path,\
+          \ orient='records', lines=True)\n    print(f\"Generated {len(generated_data)}\
+          \ detailed summary records\")\n    print(f\"Saved to: {output_dataset.path}\"\
+          )\n\n"
+        image: image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/jupyter-minimal-cpu-py312-ubi9:2025.1
+    exec-generate-document-based-qa-component:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - generate_document_based_qa_component
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'datasets' 'nest-asyncio'\
+          \ 'sdg_hub[examples]'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.5' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef generate_document_based_qa_component(\n    input_dataset: Input[Dataset],\n\
+          \    output_dataset: Output[Dataset],\n):\n    \"\"\"Generate document-based\
+          \ QA knowledge tuning data.\"\"\"\n    from datasets import load_dataset\n\
+          \    import nest_asyncio\n    import os\n    from sdg_hub import Flow, FlowRegistry\n\
+          \n    nest_asyncio.apply()\n\n    enable_reasoning = os.getenv('ENABLE_REASONING',\
+          \ 'false').lower() in ('1', 'true', 'yes')\n    model_provider = os.getenv('MODEL_PROVIDER',\
+          \ 'hosted_vllm')\n    if model_provider == 'hosted_vllm':\n        hosted_model\
+          \ = os.getenv('VLLM_MODEL', 'hosted_vllm/meta-llama/Llama-3.3-70B-Instruct')\n\
+          \        api_base = os.getenv('API_BASE_URL', 'http://localhost:8000/v1')\n\
+          \        api_key = os.getenv('VLLM_API_KEY', 'EMPTY')\n    elif model_provider\
+          \ == 'openai':\n        hosted_model = f\"openai/{os.getenv('OPENAI_MODEL',\
+          \ 'google/gemini-2.5-flash-lite-preview-09-2025')}\"\n        api_base =\
+          \ os.getenv('API_BASE_URL', 'https://openrouter.ai/api/v1')\n        api_key\
+          \ = os.getenv('OPENAI_API_KEY', 'EMPTY')\n    max_concurrency = int(os.getenv('MAX_CONCURRENCY',\
+          \ '50'))\n\n    print(\"Loading input dataset...\")\n    quality_corpus\
+          \ = load_dataset('json', data_files=input_dataset.path, split='train')\n\
+          \n    print(f\"Generating document-based QA for {len(quality_corpus)} documents...\"\
+          )\n\n    FlowRegistry.discover_flows()\n    flow_path = FlowRegistry.get_flow_path(\n\
+          \        \"Document Based Knowledge Tuning Dataset Generation Flow\"\n \
+          \   )\n    flow = Flow.from_yaml(flow_path)\n\n    flow.set_model_config(\n\
+          \        model=hosted_model,\n        api_base=api_base,\n        api_key=api_key,\n\
+          \        enable_reasoning=enable_reasoning,\n    )\n\n    runtime_params\
+          \ = {}\n    if enable_reasoning:\n        runtime_params = {\n         \
+          \   'question_generation': {'max_tokens': 1024}\n        }\n\n    print(\"\
+          Starting generation...\")\n    generated_data = flow.generate(\n       \
+          \ quality_corpus, \n        runtime_params=runtime_params, \n        max_concurrency=max_concurrency\n\
+          \    )\n\n    generated_data.to_json(output_dataset.path, orient='records',\
+          \ lines=True)\n    print(f\"Generated {len(generated_data)} document QA\
+          \ records\")\n    print(f\"Saved to: {output_dataset.path}\")\n\n"
+        image: image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/jupyter-minimal-cpu-py312-ubi9:2025.1
+    exec-generate-extractive-summary-component:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - generate_extractive_summary_component
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'datasets' 'nest-asyncio'\
+          \ 'sdg_hub[examples]'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.5' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef generate_extractive_summary_component(\n    input_dataset: Input[Dataset],\n\
+          \    output_dataset: Output[Dataset]\n):\n    \"\"\"Generate extractive\
+          \ summary knowledge tuning data.\"\"\"\n    from datasets import load_dataset\n\
+          \    import nest_asyncio\n    import os\n\n    # Import SDG Hub - now available!\n\
+          \    from sdg_hub import Flow, FlowRegistry\n\n    nest_asyncio.apply()\n\
+          \n    # Read environment variables (injected by Kubernetes Secret)\n   \
+          \ enable_reasoning = os.getenv('ENABLE_REASONING', 'false').lower() in ('1',\
+          \ 'true', 'yes')\n    model_provider = os.getenv('MODEL_PROVIDER', 'hosted_vllm')\n\
+          \    if model_provider == 'hosted_vllm':\n        hosted_model = os.getenv('VLLM_MODEL',\
+          \ 'hosted_vllm/meta-llama/Llama-3.3-70B-Instruct')\n        api_base = os.getenv('API_BASE_URL',\
+          \ 'http://localhost:8000/v1')\n        api_key = os.getenv('VLLM_API_KEY',\
+          \ 'EMPTY')\n    elif model_provider == 'openai':\n        hosted_model =\
+          \ f\"openai/{os.getenv('OPENAI_MODEL', 'google/gemini-2.5-flash-lite-preview-09-2025')}\"\
+          \n        api_base = os.getenv('API_BASE_URL', 'https://openrouter.ai/api/v1')\n\
+          \        api_key = os.getenv('OPENAI_API_KEY', 'EMPTY')\n    number_of_summaries\
+          \ = int(os.getenv('NUMBER_OF_SUMMARIES', '50'))\n    max_concurrency = int(os.getenv('MAX_CONCURRENCY',\
+          \ '50'))\n\n    print(\"Loading input dataset...\")\n    quality_corpus\
+          \ = load_dataset('json', data_files=input_dataset.path, split='train')\n\
+          \n    print(f\"Model: {hosted_model}\")\n    print(f\"API base: {api_base}\"\
+          )\n    print(f\"API key: {api_key}\")\n    print(f\"Enable reasoning: {enable_reasoning}\"\
+          )\n    print(f\"Generating extractive summaries for {len(quality_corpus)}\
+          \ documents...\")\n    print(f\"Number of summaries: {number_of_summaries}\"\
+          )\n    print(f\"Max concurrency: {max_concurrency}\")\n\n    # Discover\
+          \ and load the flow\n    FlowRegistry.discover_flows()\n    flow_path =\
+          \ FlowRegistry.get_flow_path(\n        \"Extractive Summary Knowledge Tuning\
+          \ Dataset Generation Flow\"\n    )\n    flow = Flow.from_yaml(flow_path)\n\
+          \n    # Set model configuration from environment variables\n    flow.set_model_config(\n\
+          \        model=hosted_model,\n        api_base=api_base,\n        api_key=api_key,\n\
+          \        enable_reasoning=enable_reasoning,\n    )\n\n    # Configure runtime\
+          \ parameters\n    runtime_params = {\n        'gen_extractive_summary':\
+          \ {\n            'n': number_of_summaries\n        }\n    }\n\n    if enable_reasoning:\n\
+          \        runtime_params = {\n            'question_generation': {'max_tokens':\
+          \ 1024}, \n            'gen_extractive_summary': {\n                'n':\
+          \ number_of_summaries, \n                'max_tokens': 6000\n          \
+          \  }\n        }\n\n    # Generate data\n    print(\"Starting generation...\"\
+          )\n    generated_data = flow.generate(\n        quality_corpus, \n     \
+          \   runtime_params=runtime_params, \n        max_concurrency=max_concurrency\n\
+          \    )\n\n    # Save output\n    generated_data.to_json(output_dataset.path,\
+          \ orient='records', lines=True)\n    print(f\"Generated {len(generated_data)}\
+          \ extractive summary records\")\n    print(f\"Saved to: {output_dataset.path}\"\
+          )\n\n"
+        image: image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/jupyter-minimal-cpu-py312-ubi9:2025.1
+    exec-generate-key-facts-component:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - generate_key_facts_component
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'datasets' 'nest-asyncio'\
+          \ 'sdg_hub[examples]'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.14.5' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef generate_key_facts_component(\n    input_dataset: Input[Dataset],\n\
+          \    output_dataset: Output[Dataset]\n):\n    \"\"\"Generate key facts knowledge\
+          \ tuning data.\"\"\"\n    from datasets import load_dataset\n    import\
+          \ nest_asyncio\n    import os\n    from sdg_hub import Flow, FlowRegistry\n\
+          \n    nest_asyncio.apply()\n\n    enable_reasoning = os.getenv('ENABLE_REASONING',\
+          \ 'false').lower() in ('1', 'true', 'yes')\n    model_provider = os.getenv('MODEL_PROVIDER',\
+          \ 'hosted_vllm')\n    if model_provider == 'hosted_vllm':\n        hosted_model\
+          \ = os.getenv('VLLM_MODEL', 'hosted_vllm/meta-llama/Llama-3.3-70B-Instruct')\n\
+          \        api_base = os.getenv('API_BASE_URL', 'http://localhost:8000/v1')\n\
+          \        api_key = os.getenv('VLLM_API_KEY', 'EMPTY')\n    elif model_provider\
+          \ == 'openai':\n        hosted_model = f\"openai/{os.getenv('OPENAI_MODEL',\
+          \ 'google/gemini-2.5-flash-lite-preview-09-2025')}\"\n        api_base =\
+          \ os.getenv('API_BASE_URL', 'https://openrouter.ai/api/v1')\n        api_key\
+          \ = os.getenv('OPENAI_API_KEY', 'EMPTY')\n    max_concurrency = int(os.getenv('MAX_CONCURRENCY',\
+          \ '50'))\n\n    print(\"Loading input dataset...\")\n    quality_corpus\
+          \ = load_dataset('json', data_files=input_dataset.path, split='train')\n\
+          \n    print(f\"Generating key facts for {len(quality_corpus)} documents...\"\
+          )\n\n    FlowRegistry.discover_flows()\n    flow_path = FlowRegistry.get_flow_path(\n\
+          \        \"Key Facts Knowledge Tuning Dataset Generation Flow\"\n    )\n\
+          \    flow = Flow.from_yaml(flow_path)\n\n    flow.set_model_config(\n  \
+          \      model=hosted_model,\n        api_base=api_base,\n        api_key=api_key,\n\
+          \        enable_reasoning=enable_reasoning,\n    )\n\n    runtime_params\
+          \ = {}\n    if enable_reasoning:\n        runtime_params = {\n         \
+          \   'generate_key_fact_qa': {'max_tokens': 6000}\n        }\n\n    print(\"\
+          Starting generation...\")\n    generated_data = flow.generate(\n       \
+          \ quality_corpus, \n        runtime_params=runtime_params, \n        max_concurrency=max_concurrency\n\
+          \    )\n\n    generated_data.to_json(output_dataset.path, orient='records',\
+          \ lines=True)\n    print(f\"Generated {len(generated_data)} key facts records\"\
+          )\n    print(f\"Saved to: {output_dataset.path}\")\n\n"
+        image: image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/jupyter-minimal-cpu-py312-ubi9:2025.1
+    exec-merge-all-outputs-component:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - merge_all_outputs_component
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'datasets'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.14.5'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef merge_all_outputs_component(\n    extractive_data: Input[Dataset],\n\
+          \    detailed_data: Input[Dataset],\n    key_facts_data: Input[Dataset],\n\
+          \    doc_qa_data: Input[Dataset],\n    merged_output: Output[Dataset],\n\
+          ):\n    \"\"\"Combine all generated data into a single output.\"\"\"\n \
+          \   from datasets import load_dataset, concatenate_datasets\n    import\
+          \ os\n    print(\"Loading all datasets...\")\n\n    # Load each dataset\n\
+          \    extractive = load_dataset('json', data_files=extractive_data.path,\
+          \ split='train')\n    detailed = load_dataset('json', data_files=detailed_data.path,\
+          \ split='train')\n    key_facts = load_dataset('json', data_files=key_facts_data.path,\
+          \ split='train')\n    doc_qa = load_dataset('json', data_files=doc_qa_data.path,\
+          \ split='train')\n\n    # Combine all datasets\n    print(f\"  - Extractive:\
+          \ {len(extractive)} records\")\n    print(f\"  - Detailed: {len(detailed)}\
+          \ records\")\n    print(f\"  - Key Facts: {len(key_facts)} records\")\n\
+          \    print(f\"  - Doc QA: {len(doc_qa)} records\")\n\n    extractive.to_json(os.path.join(merged_output.path,\
+          \ 'extractive_summary', 'gen.jsonl'), orient='records', lines=True)\n  \
+          \  detailed.to_json(os.path.join(merged_output.path, 'detailed_summary',\
+          \ 'gen.jsonl'), orient='records', lines=True)\n    key_facts.to_json(os.path.join(merged_output.path,\
+          \ 'key_facts_to_qa', 'gen.jsonl'), orient='records', lines=True)\n    doc_qa.to_json(os.path.join(merged_output.path,\
+          \ 'document_based_qa', 'gen.jsonl'), orient='records', lines=True)\n\n\n\
+          \    print(f\"Merged output saved to: {merged_output.path}\")\n\n"
+        image: image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/jupyter-minimal-cpu-py312-ubi9:2025.1
+pipelineInfo:
+  description: Generate knowledge tuning datasets using SDG Hub
+  name: knowledge-generation-pipeline
+root:
+  dag:
+    tasks:
+      create-seed-data-component:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-seed-data-component
+        taskInfo:
+          name: create-seed-data-component
+      generate-detailed-summary-component:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-generate-detailed-summary-component
+        dependentTasks:
+        - create-seed-data-component
+        inputs:
+          artifacts:
+            input_dataset:
+              taskOutputArtifact:
+                outputArtifactKey: output_dataset
+                producerTask: create-seed-data-component
+        taskInfo:
+          name: generate-detailed-summary-component
+      generate-document-based-qa-component:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-generate-document-based-qa-component
+        dependentTasks:
+        - create-seed-data-component
+        inputs:
+          artifacts:
+            input_dataset:
+              taskOutputArtifact:
+                outputArtifactKey: output_dataset
+                producerTask: create-seed-data-component
+        taskInfo:
+          name: generate-document-based-qa-component
+      generate-extractive-summary-component:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-generate-extractive-summary-component
+        dependentTasks:
+        - create-seed-data-component
+        inputs:
+          artifacts:
+            input_dataset:
+              taskOutputArtifact:
+                outputArtifactKey: output_dataset
+                producerTask: create-seed-data-component
+        taskInfo:
+          name: generate-extractive-summary-component
+      generate-key-facts-component:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-generate-key-facts-component
+        dependentTasks:
+        - create-seed-data-component
+        inputs:
+          artifacts:
+            input_dataset:
+              taskOutputArtifact:
+                outputArtifactKey: output_dataset
+                producerTask: create-seed-data-component
+        taskInfo:
+          name: generate-key-facts-component
+      merge-all-outputs-component:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-merge-all-outputs-component
+        dependentTasks:
+        - generate-detailed-summary-component
+        - generate-document-based-qa-component
+        - generate-extractive-summary-component
+        - generate-key-facts-component
+        inputs:
+          artifacts:
+            detailed_data:
+              taskOutputArtifact:
+                outputArtifactKey: output_dataset
+                producerTask: generate-detailed-summary-component
+            doc_qa_data:
+              taskOutputArtifact:
+                outputArtifactKey: output_dataset
+                producerTask: generate-document-based-qa-component
+            extractive_data:
+              taskOutputArtifact:
+                outputArtifactKey: output_dataset
+                producerTask: generate-extractive-summary-component
+            key_facts_data:
+              taskOutputArtifact:
+                outputArtifactKey: output_dataset
+                producerTask: generate-key-facts-component
+        taskInfo:
+          name: merge-all-outputs-component
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.14.5
+---
+platforms:
+  kubernetes:
+    deploymentSpec:
+      executors:
+        exec-create-seed-data-component:
+          secretAsEnv:
+          - keyToEnv:
+            - envVar: SEED_DATA_PATH
+              secretKey: SEED_DATA_PATH
+            - envVar: SEED_DATA_SUBSAMPLE
+              secretKey: SEED_DATA_SUBSAMPLE
+            secretName: sdg-pipeline-config
+            secretNameParameter:
+              runtimeValue:
+                constant: sdg-pipeline-config
+        exec-generate-detailed-summary-component:
+          secretAsEnv:
+          - keyToEnv:
+            - envVar: MODEL_PROVIDER
+              secretKey: MODEL_PROVIDER
+            - envVar: VLLM_MODEL
+              secretKey: VLLM_MODEL
+            - envVar: API_BASE_URL
+              secretKey: API_BASE_URL
+            - envVar: VLLM_API_KEY
+              secretKey: VLLM_API_KEY
+            - envVar: OPENAI_MODEL
+              secretKey: OPENAI_MODEL
+            - envVar: OPENAI_API_KEY
+              secretKey: OPENAI_API_KEY
+            - envVar: ENABLE_REASONING
+              secretKey: ENABLE_REASONING
+            - envVar: NUMBER_OF_SUMMARIES
+              secretKey: NUMBER_OF_SUMMARIES
+            - envVar: MAX_CONCURRENCY
+              secretKey: MAX_CONCURRENCY
+            - envVar: LITELLM_REQUEST_TIMEOUT
+              secretKey: LITELLM_REQUEST_TIMEOUT
+            secretName: sdg-pipeline-config
+            secretNameParameter:
+              runtimeValue:
+                constant: sdg-pipeline-config
+        exec-generate-document-based-qa-component:
+          secretAsEnv:
+          - keyToEnv:
+            - envVar: MODEL_PROVIDER
+              secretKey: MODEL_PROVIDER
+            - envVar: VLLM_MODEL
+              secretKey: VLLM_MODEL
+            - envVar: API_BASE_URL
+              secretKey: API_BASE_URL
+            - envVar: VLLM_API_KEY
+              secretKey: VLLM_API_KEY
+            - envVar: OPENAI_MODEL
+              secretKey: OPENAI_MODEL
+            - envVar: OPENAI_API_KEY
+              secretKey: OPENAI_API_KEY
+            - envVar: ENABLE_REASONING
+              secretKey: ENABLE_REASONING
+            - envVar: NUMBER_OF_SUMMARIES
+              secretKey: NUMBER_OF_SUMMARIES
+            - envVar: MAX_CONCURRENCY
+              secretKey: MAX_CONCURRENCY
+            - envVar: LITELLM_REQUEST_TIMEOUT
+              secretKey: LITELLM_REQUEST_TIMEOUT
+            secretName: sdg-pipeline-config
+            secretNameParameter:
+              runtimeValue:
+                constant: sdg-pipeline-config
+        exec-generate-extractive-summary-component:
+          secretAsEnv:
+          - keyToEnv:
+            - envVar: MODEL_PROVIDER
+              secretKey: MODEL_PROVIDER
+            - envVar: VLLM_MODEL
+              secretKey: VLLM_MODEL
+            - envVar: API_BASE_URL
+              secretKey: API_BASE_URL
+            - envVar: VLLM_API_KEY
+              secretKey: VLLM_API_KEY
+            - envVar: OPENAI_MODEL
+              secretKey: OPENAI_MODEL
+            - envVar: OPENAI_API_KEY
+              secretKey: OPENAI_API_KEY
+            - envVar: ENABLE_REASONING
+              secretKey: ENABLE_REASONING
+            - envVar: NUMBER_OF_SUMMARIES
+              secretKey: NUMBER_OF_SUMMARIES
+            - envVar: MAX_CONCURRENCY
+              secretKey: MAX_CONCURRENCY
+            - envVar: LITELLM_REQUEST_TIMEOUT
+              secretKey: LITELLM_REQUEST_TIMEOUT
+            secretName: sdg-pipeline-config
+            secretNameParameter:
+              runtimeValue:
+                constant: sdg-pipeline-config
+        exec-generate-key-facts-component:
+          secretAsEnv:
+          - keyToEnv:
+            - envVar: MODEL_PROVIDER
+              secretKey: MODEL_PROVIDER
+            - envVar: VLLM_MODEL
+              secretKey: VLLM_MODEL
+            - envVar: API_BASE_URL
+              secretKey: API_BASE_URL
+            - envVar: VLLM_API_KEY
+              secretKey: VLLM_API_KEY
+            - envVar: OPENAI_MODEL
+              secretKey: OPENAI_MODEL
+            - envVar: OPENAI_API_KEY
+              secretKey: OPENAI_API_KEY
+            - envVar: ENABLE_REASONING
+              secretKey: ENABLE_REASONING
+            - envVar: NUMBER_OF_SUMMARIES
+              secretKey: NUMBER_OF_SUMMARIES
+            - envVar: MAX_CONCURRENCY
+              secretKey: MAX_CONCURRENCY
+            - envVar: LITELLM_REQUEST_TIMEOUT
+              secretKey: LITELLM_REQUEST_TIMEOUT
+            secretName: sdg-pipeline-config
+            secretNameParameter:
+              runtimeValue:
+                constant: sdg-pipeline-config
