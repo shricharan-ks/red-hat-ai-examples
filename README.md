@@ -1,11 +1,25 @@
-![Red Hat AI](assets/RHAI-logo.png)
+![Red Hat AI Examples Logo](assets/RHAI-logo.png)
 
 # Red Hat AI Examples
 
-Unlock the Power of AI with Red Hat AI: Practical Examples for Real-World Solutions.
+This repository provides example notebooks and flows to help users get started with AI and machine learning on Red Hat platforms. It is supported by a library of tools that can be packaged to simplify usage and accelerate development.
 
-## Overview
+## Features
 
-### Welcome to Red Hat OpenShift AI Examples!
+- **Example Notebooks:** Step-by-step guides and practical examples.
+- **Reusable Flows:** Predefined workflows for common AI tasks.
+- **Tool Library:** Utilities and helper functions to streamline your projects.
 
-This repository provides a curated collection of runnable, well-documented Jupyter notebooks, pipelines, and code samples. These resources are designed to demonstrate how to effectively build, customize, evaluate, deploy, and manage Artificial Intelligence (AI) and Machine Learning (ML) models and applications on Red Hat AI. The focus is on practical application and learning, enabling users to explore the full potential of AI for meaningful customer use cases.
+## Getting Started
+
+1. Clone this repository.
+2. Explore the `examples/` directory for examples for different usecase.
+4. Follow the instructions in each example's `README.md` for setup and execution.
+
+## Contributing
+
+Contributions are welcome! Please open issues or submit pull requests for improvements.
+
+## License
+
+See [LICENSE](./LICENSE) for details.

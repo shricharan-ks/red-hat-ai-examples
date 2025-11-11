@@ -1,0 +1,38 @@
+repos:
+
+# RUFF - Formatting and linting for the repository.
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  # Ruff version.
+  rev: v0.14.0
+  hooks:
+    # Run the linter.
+    - id: ruff-check
+      types_or: [ python, pyi ]
+      args: [ --fix ]
+    # Run the formatter.
+    - id: ruff-format
+      types_or: [ python, pyi ]
+
+# Gitleaks - Scan for secrets in the repository.
+-   repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.2
+    hooks:
+      - id: gitleaks
+
+# Talisman - Scan for secrets and sensitive information in the repository.
+-   repo: https://github.com/thoughtworks/talisman
+    rev: 'v1.32.2'  # Update me!
+    hooks:
+      # both pre-commit and pre-push supported
+      # -   id: talisman-push
+      - id: talisman-commit
+        name: talisman secret scan
+
+# Detect Secrets - Scan for secrets in the repository.
+-   repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0  # check for latest version
+    hooks:
+      - id: detect-secrets
+        name: detectsecrets scan
+        language: python
+        args: ['--exclude-lines', 'HF_TOKEN|hf-hub-secret']

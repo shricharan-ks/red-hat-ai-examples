@@ -1,0 +1,12 @@
+[project]
+name = "Model_Training"
+version = "0.1.0"
+description = "A project for training the model using training dataset"
+requires-python = ">=3.12"
+dependencies = [
+    "training-hub>=0.3.0",
+    "transformers>=4.57.1",
+    "torch==2.8.0",
+    "liger_kernel>=0.6.3",
+    "python-dotenv>=1.1.1"
+]
