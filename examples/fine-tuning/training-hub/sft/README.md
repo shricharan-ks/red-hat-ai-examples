@@ -138,7 +138,7 @@ This example has been validated with the following configurations:
       "nvidia.com/gpu": 1
       "memory": 64Gi
       "cpu": 4
-    base_image: quay.io/rhoai/odh-training-cuda128-torch28-py312-rhel9:rhoai-3.0
+    base_image: quay.io/modh/training:py312-cuda128-torch280
     env_vars:
       "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"
       "NCCL_DEBUG": "INFO"
@@ -195,7 +195,7 @@ This example has been validated with the following configurations:
       "nvidia.com/gpu": 1
       "memory": 64Gi
       "cpu": 4
-    base_image: quay.io/rhoai/odh-training-cuda128-torch28-py312-rhel9:rhoai-3.0
+    base_image: quay.io/modh/training:py312-cuda128-torch280
     env_vars:
       "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"
       "NCCL_DEBUG": "INFO"
@@ -253,7 +253,7 @@ This example has been validated with the following configurations:
       "nvidia.com/gpu": 1
       "memory": 64Gi
       "cpu": 4
-    base_image: quay.io/rhoai/odh-training-cuda128-torch28-py312-rhel9:rhoai-3.0
+    base_image: quay.io/modh/training:py312-cuda128-torch280
     env_vars:
       "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"
       "NCCL_DEBUG": "INFO"
