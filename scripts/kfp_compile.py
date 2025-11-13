@@ -28,6 +28,8 @@ step_1 = steps[0]
 
 print(step_1)
 notebook_path = WORKSPACE / USE_CASE / step_1 / f"{step_1.split('_', 1)[1]}.ipynb"
+
+
 print(f"Converting notebook: {notebook_path}")
 with open(notebook_path, "r", encoding="utf-8") as f:
     nb = nbformat.read(f, as_version=4)
@@ -38,6 +40,22 @@ source, _ = exporter.from_notebook_node(nb)
 
 # Temporary fix for doing inline installs in juputer notebooks
 source = re.sub(r"get_ipython\(\)\.system\((.*)\)", r"import os\nos.system(\1)", source)
+
+step_path = WORKSPACE / USE_CASE / step_1 / "utils"
+if step_path.exists():
+    print(f"Including utils from: {step_path}")
+    utils = ""
+
+    utils += "# Utils function from files are added\n"
+    for util_file in step_path.glob("*.py"):
+        utils += f"# From file: {util_file.name}\n\n"
+        with open(util_file, "r", encoding="utf-8") as f:
+            utils += f.read() + "\n\n"
+
+    utils += "# End of utils from files\n"
+
+    source = re.sub(r"from utils", r"#from utils", source)
+    source = utils + "\n\n" + source
 
 
 print("\n\n\n\n")
