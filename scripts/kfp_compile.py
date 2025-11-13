@@ -24,7 +24,7 @@ steps = sorted(steps, key=lambda x: int(x.split("_")[0]))
 print("Found steps:")
 for step in steps:
     print(f"- {step}")
-step_1 = steps[0]
+step_1 = steps[3]
 
 print(step_1)
 notebook_path = WORKSPACE / USE_CASE / step_1 / f"{step_1.split('_', 1)[1]}.ipynb"
@@ -39,7 +39,8 @@ exporter = PythonExporter()
 source, _ = exporter.from_notebook_node(nb)
 
 # Temporary fix for doing inline installs in juputer notebooks
-source = re.sub(r"get_ipython\(\)\.system\((.*)\)", r"import os\nos.system(\1)", source)
+source = "import os\n" + source
+source = re.sub(r"get_ipython\(\)\.system\((.*)\)", r"os.system(f\1)", source)
 
 step_path = WORKSPACE / USE_CASE / step_1 / "utils"
 if step_path.exists():
@@ -54,7 +55,23 @@ if step_path.exists():
 
     utils += "# End of utils from files\n"
 
-    source = re.sub(r"from utils", r"#from utils", source)
+    pattern = r"""
+        (?:                                  # start of line
+            from\s+utils[^\n]*import         # from utils... import
+            (?:\s*\([^\)]*\))?               # optional multi-line parentheses
+            |                                 # OR
+            import\s+utils[^\n]*             # import utils...
+        )
+    """
+
+    # Replace matched imports by commenting out each line
+    source = re.sub(
+        pattern,
+        lambda m: "\n".join("# " + line for line in m.group(0).splitlines()),
+        source,
+        flags=re.MULTILINE | re.VERBOSE | re.DOTALL,
+    )
+
     source = utils + "\n\n" + source
 
 
@@ -66,17 +83,17 @@ with open("output.py", "w") as f:
 
 
 # Required in Steps 01, 05, 06
-os.environ["STUDENT_MODEL_NAME"] = "RedHatAI/Llama-3.1-8B-Instruct"
+os.environ["STUDENT_MODEL_NAME"] = "meta-llama/Llama-3.2-1B-Instruct"
 # Knowledge Generation
 # Required in Steps 03
 os.environ["TEACHER_MODEL_NAME"] = "openai/gpt-oss-120b"
 os.environ["TEACHER_MODEL_BASE_URL"] = "http://0.0.0.0:8000/v1"
-os.environ["TEACHER_MODEL_API_KEY"] = None
+os.environ["TEACHER_MODEL_API_KEY"] = ""
 
 
 # Knowledge Mixing
 # Required in Steps 04
-os.environ["TOKENIZER_MODEL_NAME"] = "RedHatAI/Llama-3.1-8B-Instruct"
+os.environ["TOKENIZER_MODEL_NAME"] = "meta-llama/Llama-3.2-1B-Instruct"
 os.environ["SAVE_GPT_OSS_FORMAT"] = "false"
 os.environ["CUT_SIZES"] = "5,50"
 os.environ["QA_PER_DOC"] = "10"
