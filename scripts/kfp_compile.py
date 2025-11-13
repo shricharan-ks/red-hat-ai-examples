@@ -47,13 +47,30 @@ with open("output.py", "w") as f:
     f.write(source)
 
 
+# Required in Steps 01, 05, 06
+os.environ["STUDENT_MODEL_NAME"] = "RedHatAI/Llama-3.1-8B-Instruct"
+# Knowledge Generation
+# Required in Steps 03
+os.environ["TEACHER_MODEL_NAME"] = "openai/gpt-oss-120b"
+os.environ["TEACHER_MODEL_BASE_URL"] = "http://0.0.0.0:8000/v1"
+os.environ["TEACHER_MODEL_API_KEY"] = None
+
+
+# Knowledge Mixing
+# Required in Steps 04
+os.environ["TOKENIZER_MODEL_NAME"] = "RedHatAI/Llama-3.1-8B-Instruct"
+os.environ["SAVE_GPT_OSS_FORMAT"] = "false"
+os.environ["CUT_SIZES"] = "5,50"
+os.environ["QA_PER_DOC"] = "10"
+
+os.environ["HF_TOKEN"] = ""
+
+
 old_cwd = os.getcwd()
 os.chdir(WORKSPACE / USE_CASE / step_1)
 try:
-    local_vars = {}
-    os.environ["STUDENT_MODEL_NAME"] = "meta-llama/Llama-3.2-1B-Instruct"
-    os.environ["HF_TOKEN"] = ""
-    r = exec(source, {}, local_vars)
+    namespace_locals = {}
+    r = exec(source, namespace_locals, namespace_locals)
     print("Compiling pipeline...")
     print("\n\n\n", r)
 finally:
