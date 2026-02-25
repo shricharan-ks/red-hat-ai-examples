@@ -1,0 +1,11 @@
+[project]
+name = "kfp-knowledge-tuning"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "docker>=7.1.0",
+    "kfp-components @ git+https://github.com/kubeflow/pipelines-components@main",
+    "kfp==2.15.2",
+]
