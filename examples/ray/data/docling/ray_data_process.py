@@ -8,16 +8,17 @@ hardcoded values.  See the companion notebooks for how these variables are
 set at submission time.
 """
 
-import os
-import ray
-import time
 import glob
+import multiprocessing as mp
+import os
 import queue
 import subprocess
-import multiprocessing as mp
+import time
 from pathlib import Path
 from typing import Dict, List
+
 import pandas as pd
+import ray
 
 # ---------------------------------------------------------------------------
 # Parameters (passed as environment variables from the job submission)
@@ -59,6 +60,7 @@ def _write(path, data, retries=3, delay=0.5):
 # Converter subprocess
 # ---------------------------------------------------------------------------
 
+
 def _converter_worker(req_q, res_q, cpus_per_actor, output_base_str, write_json):
     """Long-running subprocess that owns the DocumentConverter.
 
@@ -69,19 +71,21 @@ def _converter_worker(req_q, res_q, cpus_per_actor, output_base_str, write_json)
     os.environ["OMP_NUM_THREADS"] = str(cpus_per_actor)
     os.environ["MKL_NUM_THREADS"] = str(cpus_per_actor)
 
-    from docling.document_converter import DocumentConverter, PdfFormatOption
-    from docling.datamodel.pipeline_options import (
-        PdfPipelineOptions,
-        AcceleratorOptions,
-    )
-    from docling.datamodel.base_models import InputFormat, DocumentStream
     import io
+
+    from docling.datamodel.base_models import DocumentStream, InputFormat
+    from docling.datamodel.pipeline_options import (
+        AcceleratorOptions,
+        PdfPipelineOptions,
+    )
+    from docling.document_converter import DocumentConverter, PdfFormatOption
 
     pipeline_options = PdfPipelineOptions()
     pipeline_options.do_ocr = False
     pipeline_options.do_table_structure = True
     pipeline_options.accelerator_options = AcceleratorOptions(
-        num_threads=cpus_per_actor, device="cpu",
+        num_threads=cpus_per_actor,
+        device="cpu",
     )
     converter = DocumentConverter(
         format_options={
@@ -144,11 +148,13 @@ def _converter_worker(req_q, res_q, cpus_per_actor, output_base_str, write_json)
 # Ray Data actor
 # ---------------------------------------------------------------------------
 
+
 class DoclingProcessor:
     """Thin actor that delegates conversion to a subprocess."""
 
     def __init__(self):
         import socket
+
         self.hostname = socket.gethostname()
 
         self.output_base = Path(PVC_MOUNT_PATH) / OUTPUT_PATH
@@ -158,16 +164,23 @@ class DoclingProcessor:
             _mkdir(self.output_base / "json")
 
         self._start_worker()
-        print(f"[{self.hostname}] DoclingProcessor ready "
-              f"(converter pid={self._worker.pid}, timeout={FILE_TIMEOUT}s)")
+        print(
+            f"[{self.hostname}] DoclingProcessor ready "
+            f"(converter pid={self._worker.pid}, timeout={FILE_TIMEOUT}s)"
+        )
 
     def _start_worker(self):
         self._req_q = mp.Queue()
         self._res_q = mp.Queue()
         self._worker = mp.Process(
             target=_converter_worker,
-            args=(self._req_q, self._res_q, CPUS_PER_ACTOR,
-                  str(self.output_base), WRITE_JSON),
+            args=(
+                self._req_q,
+                self._res_q,
+                CPUS_PER_ACTOR,
+                str(self.output_base),
+                WRITE_JSON,
+            ),
             daemon=True,
         )
         self._worker.start()
@@ -211,7 +224,9 @@ class DoclingProcessor:
             try:
                 result = self._res_q.get(timeout=FILE_TIMEOUT)
                 status_str, page_count, file_size, md_kb, js_kb, error_msg = result
-                file_size_mb = round(file_size / (1024 * 1024), 3) if file_size > 0 else 0.0
+                file_size_mb = (
+                    round(file_size / (1024 * 1024), 3) if file_size > 0 else 0.0
+                )
                 if status_str != "success":
                     status = "error"
             except queue.Empty:
@@ -229,15 +244,24 @@ class DoclingProcessor:
             file_sizes_mb.append(file_size_mb)
             output_md_kb.append(float(md_kb))
             output_json_kb.append(float(js_kb))
-            pps = round(page_count / docling_duration, 2) if docling_duration > 0 and page_count > 0 else 0.0
+            pps = (
+                round(page_count / docling_duration, 2)
+                if docling_duration > 0 and page_count > 0
+                else 0.0
+            )
             pages_per_second.append(pps)
             actor_hosts.append(self.hostname)
 
         return {
-            "filename": filenames, "status": statuses, "page_count": page_counts,
-            "error": errors, "docling_duration_s": docling_durations,
-            "file_size_mb": file_sizes_mb, "output_md_kb": output_md_kb,
-            "output_json_kb": output_json_kb, "pages_per_second": pages_per_second,
+            "filename": filenames,
+            "status": statuses,
+            "page_count": page_counts,
+            "error": errors,
+            "docling_duration_s": docling_durations,
+            "file_size_mb": file_sizes_mb,
+            "output_md_kb": output_md_kb,
+            "output_json_kb": output_json_kb,
+            "pages_per_second": pages_per_second,
             "actor_hostname": actor_hosts,
         }
 
@@ -245,6 +269,7 @@ class DoclingProcessor:
 # ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
+
 
 def ray_data_process():
     input_full_path = os.path.join(PVC_MOUNT_PATH, INPUT_PATH)
@@ -255,16 +280,21 @@ def ray_data_process():
     target_blocks = MAX_ACTORS * REPARTITION_FACTOR
     ds = ray.data.from_pandas(pd.DataFrame({"path": pdf_paths}))
     ds = ds.repartition(target_blocks)
-    print(f"Repartitioned into {target_blocks} blocks "
-          f"(~{len(pdf_paths) // target_blocks} files/block) "
-          f"for {MAX_ACTORS} max actors.")
-    print(f"Per-file timeout: {FILE_TIMEOUT}s  |  "
-          f"max_errored_blocks: {MAX_ERRORED_BLOCKS}")
+    print(
+        f"Repartitioned into {target_blocks} blocks "
+        f"(~{len(pdf_paths) // target_blocks} files/block) "
+        f"for {MAX_ACTORS} max actors."
+    )
+    print(
+        f"Per-file timeout: {FILE_TIMEOUT}s  |  "
+        f"max_errored_blocks: {MAX_ERRORED_BLOCKS}"
+    )
 
     results_ds = ds.map_batches(
         DoclingProcessor,
         compute=ray.data.ActorPoolStrategy(
-            min_size=MIN_ACTORS, max_size=MAX_ACTORS,
+            min_size=MIN_ACTORS,
+            max_size=MAX_ACTORS,
         ),
         batch_size=BATCH_SIZE,
         batch_format="numpy",
@@ -285,7 +315,9 @@ def ray_data_process():
     errors_list = []
 
     for batch in results_ds.iter_batches(
-        batch_size=200, prefetch_batches=2, batch_format="numpy",
+        batch_size=200,
+        prefetch_batches=2,
+        batch_format="numpy",
     ):
         n = len(batch["filename"])
         for i in range(n):
@@ -316,29 +348,29 @@ def ray_data_process():
     print("\n" + "=" * 70)
     print("PERFORMANCE REPORT")
     print("=" * 70)
-    print(f"Actors:         {MIN_ACTORS}..{MAX_ACTORS}  | "
-          f"CPUs/actor: {CPUS_PER_ACTOR}")
-    print(f"Blocks:         {target_blocks}  "
-          f"(~{len(pdf_paths) // target_blocks} files/block)")
+    print(f"Actors:         {MIN_ACTORS}..{MAX_ACTORS}  | CPUs/actor: {CPUS_PER_ACTOR}")
+    print(
+        f"Blocks:         {target_blocks}  "
+        f"(~{len(pdf_paths) // target_blocks} files/block)"
+    )
     print(f"File timeout:   {FILE_TIMEOUT}s")
-    print(f"\n--- Results ---")
+    print("\n--- Results ---")
     print(f"Total:          {total_files}")
-    print(f"Success:        {success_count} "
-          f"({100 - error_rate - timeout_rate:.1f}%)")
+    print(f"Success:        {success_count} ({100 - error_rate - timeout_rate:.1f}%)")
     print(f"Errors:         {error_count} ({error_rate:.1f}%)")
     print(f"Timeouts:       {timeout_count} ({timeout_rate:.1f}%)")
     print(f"Total pages:    {total_pages}")
-    print(f"\n--- Throughput ---")
+    print("\n--- Throughput ---")
     print(f"Wall clock:     {wall_clock:.1f}s")
     if wall_clock > 0:
         print(f"Files/second:   {success_count / wall_clock:.2f}")
         print(f"Pages/second:   {total_pages / wall_clock:.2f}")
-    print(f"\n--- Actor Distribution ---")
+    print("\n--- Actor Distribution ---")
     for actor, count in sorted(actor_distribution.items()):
         pct = count / total_files * 100 if total_files else 0.0
         print(f"  {actor}: {count} files ({pct:.1f}%)")
     if errors_list:
-        print(f"\n--- Errors & Timeouts (first 10) ---")
+        print("\n--- Errors & Timeouts (first 10) ---")
         for fname, err in errors_list[:10]:
             print(f"  {fname}: {err[:80]}")
     print("=" * 70)
