@@ -25,7 +25,7 @@ import ray
 # ---------------------------------------------------------------------------
 MIN_ACTORS = int(os.environ.get("MIN_ACTORS", "8"))
 MAX_ACTORS = int(os.environ.get("MAX_ACTORS", "24"))
-CPUS_PER_ACTOR = int(os.environ.get("CPUS_PER_ACTOR", "2"))
+CPUS_PER_ACTOR = int(os.environ.get("CPUS_PER_ACTOR", "4"))
 BATCH_SIZE = int(os.environ.get("BATCH_SIZE", "4"))
 REPARTITION_FACTOR = int(os.environ.get("REPARTITION_FACTOR", "40"))
 

@@ -30,31 +30,31 @@ Both notebooks submit the same processing script (`ray_data_process_async.py`), 
 │  ┌────────────────────┐                                              │
 │  │   KubeRay Operator  │  Manages RayCluster lifecycle               │
 │  └─────────┬──────────┘                                              │
-│            │ creates                                                  │
-│            ▼                                                          │
+│            │ creates                                                 │
+│            ▼                                                         │
 │  ┌────────────────────────────────────────────────────────────────┐  │
-│  │                         RayCluster                              │  │
-│  │                                                                  │  │
-│  │  ┌──────────────────┐                                            │  │
-│  │  │    Head Node       │  Schedules Ray Data stages               │  │
-│  │  └────────┬─────────┘                                            │  │
-│  │           │                                                       │  │
-│  │     ┌─────┼──────┬──────────┬─── ─ ─ ─ ┐                        │  │
-│  │     ▼     ▼      ▼          ▼           ▼                        │  │
+│  │                         RayCluster                             │  │
+│  │                                                                │  │
+│  │  ┌──────────────────┐                                          │  │
+│  │  │    Head Node       │  Schedules Ray Data stages             │  │
+│  │  └────────┬─────────┘                                          │  │
+│  │           │                                                    │  │
+│  │     ┌─────┼──────┬──────────┬─── ─ ─ ─ ┐                       │  │
+│  │     ▼     ▼      ▼          ▼           ▼                      │  │
 │  │  ┌──────┐┌──────┐┌──────┐┌──────┐   ┌──────┐                   │  │
 │  │  │Wkr 1 ││Wkr 2 ││Wkr 3 ││Wkr 4 │   │Wkr N │                   │  │
 │  │  │      ││      ││      ││      │   │      │                   │  │
 │  │  │Doclng││Doclng││Doclng││Doclng│   │Doclng│                   │  │
 │  │  │Actor ││Actor ││Actor ││Actor │   │Actor │                   │  │
 │  │  └──┬───┘└──┬───┘└──┬───┘└──┬───┘   └──┬───┘                   │  │
-│  │     │       │       │       │           │                        │  │
-│  └─────┼───────┼───────┼───────┼───────────┼────────────────────────┘  │
-│        │       │       │       │           │                           │
-│        ▼       ▼       ▼       ▼           ▼                           │
+│  │     │       │       │       │           │                      │  │
+│  └─────┼───────┼───────┼───────┼───────────┼──────────────────────┘  │
+│        │       │       │       │           │                         │
+│        ▼       ▼       ▼       ▼           ▼                         │
 │  ┌────────────────────────────────────────────────────────────────┐  │
-│  │                    PVC (ReadWriteMany)                          │  │
-│  │                                                                  │  │
-│  │   input/pdfs/  ──────────────────────►  output/json/            │  │
+│  │                    PVC (ReadWriteMany)                         │  │
+│  │                                                                │  │
+│  │   input/pdfs/  ──────────────────────►  output/json/           │  │
 │  └────────────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────────────┘
 ```
@@ -65,17 +65,17 @@ The processing script (`ray_data_process_async.py`) runs the following pipeline:
 
 ```text
 ┌──────────────────┐     ┌───────────────────────────┐     ┌──────────────────┐
-│   Stage 1: Read   │     │   Stage 2: Process         │     │  Stage 3: Report  │
-│                    │────▶│                             │────▶│                    │
-│ ray.data.read_     │     │ DoclingProcessor actors     │     │ iter_batches()     │
-│ binary_files()     │     │                             │     │                    │
-│                    │     │ For each PDF:               │     │ Collects results   │
-│ Reads PDFs from    │     │  1. Convert via Docling     │     │ and prints a       │
-│ PVC into Ray       │     │  2. Export to JSON dict     │     │ performance        │
-│ data blocks        │     │  3. Write JSON to PVC       │     │ report with:       │
-│                    │     │                             │     │  - Throughput       │
-│ .filter(.pdf)      │     │ ActorPoolStrategy:          │     │  - Actor stats     │
-│ .limit(NUM_FILES)  │     │  min_size -> max_size       │     │  - Error summary   │
+│   Stage 1: Read  │     │   Stage 2: Process        │     │  Stage 3: Report │
+│                  │────▶│                           │────▶│                  │
+│ ray.data.read_   │     │ DoclingProcessor actors   │     │ iter_batches()   │
+│ binary_files()   │     │                           │     │                  │
+│                  │     │ For each PDF:             │     │ Collects results │
+│ Reads PDFs from  │     │  1. Convert via Docling   │     │ and prints a     │
+│ PVC into Ray     │     │  2. Export to JSON dict   │     │ performance      │
+│ data blocks      │     │  3. Write JSON to PVC     │     │ report with:     │
+│                  │     │                           │     │  - Throughput    │
+│ .filter(.pdf)    │     │ ActorPoolStrategy:        │     │  - Actor stats   │
+│ .limit(NUM_FILES)│     │  min_size -> max_size     │     │  - Error summary │
 └──────────────────┘     └───────────────────────────┘     └──────────────────┘
                                 │
                           Prefetching and streaming
@@ -129,15 +129,15 @@ Both notebooks use the same tuning parameters, configured as environment variabl
 
 | Parameter | Default | Description |
 |---|---|---|
-| `NUM_FILES` | 5000 | Number of PDF files to process |
-| `MIN_ACTORS` | 16 | Minimum warm actors (avoids cold starts) |
-| `MAX_ACTORS` | 16 | Maximum parallel actors |
+| `NUM_FILES` | 10000 | Number of PDF files to process |
+| `MIN_ACTORS` | 4 | Minimum warm actors (avoids cold starts) |
+| `MAX_ACTORS` | 12 | Maximum parallel actors |
 | `CPUS_PER_ACTOR` | 4 | CPUs allocated to each Docling actor |
-| `BATCH_SIZE` | 1 | PDFs per actor batch (1 for large PDFs, 2-4 for small PDFs) |
+| `BATCH_SIZE` | 4 | PDFs per actor batch (1 for large PDFs, 2-4 for small PDFs) |
 
 **Sizing formula:** `MAX_ACTORS = total_worker_cpus / CPUS_PER_ACTOR`
 
-For example, 8 workers x 8 CPUs = 64 total CPUs, so `MAX_ACTORS = 16` with `CPUS_PER_ACTOR = 4`.
+For example, 8 workers x 8 CPUs = 64 total CPUs.
 
 ## Setup
 
