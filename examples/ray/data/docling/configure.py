@@ -578,9 +578,31 @@ Examples:
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
+BANNER = """\
+
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║                         Red Hat AI                               ║
+  ║          Ray Data + Docling Configuration Calculator             ║
+  ╚══════════════════════════════════════════════════════════════════╝
+
+  This tool provides configuration recommendations for running
+  batch PDF processing pipelines with Ray Data and Docling on
+  Red Hat OpenShift AI.
+
+  These recommendations are provided on a best-effort basis and
+  are intended as a starting point. Actual resource requirements
+  may vary depending on your workload characteristics, cluster
+  environment, and PDF complexity. Please validate all suggested
+  values against your specific deployment before running in
+  production.
+"""
+
 
 def main():
     args = parse_args()
+
+    if not args.json:
+        print(BANNER)
 
     if args.interactive:
         inputs = interactive_mode()
