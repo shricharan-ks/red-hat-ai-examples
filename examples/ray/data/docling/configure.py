@@ -17,25 +17,27 @@ import sys
 from dataclasses import dataclass, field
 from typing import List
 
-
 # ─── Constants & Defaults ────────────────────────────────────────────────────
 
-OVERHEAD_CPUS = 2              # CPUs reserved per worker for Ray overhead (raylet, object store)
-HEAD_RAY_NUM_CPUS = 0          # Ray-advertised CPUs on head (always 0 — no actors scheduled there)
-DEFAULT_HEAD_CPUS = 4          # Kubernetes CPU allocation for the head pod
-DEFAULT_HEAD_MEMORY_GB = 8     # Kubernetes memory allocation for the head pod
-MIN_MEMORY_PER_ACTOR_GB = 4    # Docling needs at least 4 GB per actor
-DEFAULT_BATCH_SIZE = 4         # Files per map_batches call
+OVERHEAD_CPUS = 2  # CPUs reserved per worker for Ray overhead (raylet, object store)
+HEAD_RAY_NUM_CPUS = (
+    0  # Ray-advertised CPUs on head (always 0 — no actors scheduled there)
+)
+DEFAULT_HEAD_CPUS = 4  # Kubernetes CPU allocation for the head pod
+DEFAULT_HEAD_MEMORY_GB = 8  # Kubernetes memory allocation for the head pod
+MIN_MEMORY_PER_ACTOR_GB = 4  # Docling needs at least 4 GB per actor
+DEFAULT_BATCH_SIZE = 4  # Files per map_batches call
 DEFAULT_REPARTITION_FACTOR = 40  # Blocks = max_actors × this factor
 DEFAULT_OBJECT_STORE_PROPORTION = 0.1  # Low because we pass paths, not bytes
-DEFAULT_CPUS_PER_ACTOR = 2     # CPUs allocated to each Docling actor
+DEFAULT_CPUS_PER_ACTOR = 2  # CPUs allocated to each Docling actor
 
 # Estimated seconds per file for time projections
-AVG_SECONDS_FAST = 5           # Small/simple PDFs
-AVG_SECONDS_SLOW = 20          # Large/complex PDFs with tables
+AVG_SECONDS_FAST = 5  # Small/simple PDFs
+AVG_SECONDS_SLOW = 20  # Large/complex PDFs with tables
 
 
 # ─── Data Structures ─────────────────────────────────────────────────────────
+
 
 @dataclass
 class PipelineConfig:
@@ -77,6 +79,7 @@ class PipelineConfig:
 
 # ─── Core Logic ──────────────────────────────────────────────────────────────
 
+
 def calculate(cfg: PipelineConfig) -> PipelineConfig:
     """Apply all equations to derive configuration values from inputs."""
 
@@ -94,21 +97,27 @@ def calculate(cfg: PipelineConfig) -> PipelineConfig:
     cfg.object_store_memory_gb = cfg.worker_memory_gb * cfg.object_store_proportion
     if cfg.actors_per_worker > 0:
         cfg.memory_per_actor_gb = (
-            (cfg.worker_memory_gb - cfg.object_store_memory_gb) / cfg.actors_per_worker
-        )
+            cfg.worker_memory_gb - cfg.object_store_memory_gb
+        ) / cfg.actors_per_worker
     else:
         cfg.memory_per_actor_gb = 0.0
 
     # Data partitioning
     cfg.total_blocks = cfg.max_actors * cfg.repartition_factor
-    cfg.files_per_block = cfg.num_files / cfg.total_blocks if cfg.total_blocks > 0 else cfg.num_files
+    cfg.files_per_block = (
+        cfg.num_files / cfg.total_blocks if cfg.total_blocks > 0 else cfg.num_files
+    )
     # Each block is processed in batches of batch_size; this is the scheduling
     # granularity within a block — Ray can only preempt between batches.
-    cfg.batches_per_block = math.ceil(cfg.files_per_block / cfg.batch_size) if cfg.batch_size > 0 else 0
+    cfg.batches_per_block = (
+        math.ceil(cfg.files_per_block / cfg.batch_size) if cfg.batch_size > 0 else 0
+    )
 
     # Cluster totals (head + workers)
     cfg.total_cluster_cpus = cfg.head_cpus + (cfg.num_workers * cfg.worker_cpus)
-    cfg.total_cluster_memory_gb = cfg.head_memory_gb + (cfg.num_workers * cfg.worker_memory_gb)
+    cfg.total_cluster_memory_gb = cfg.head_memory_gb + (
+        cfg.num_workers * cfg.worker_memory_gb
+    )
 
     # Time estimates
     if cfg.max_actors > 0:
@@ -179,6 +188,7 @@ def validate(cfg: PipelineConfig) -> PipelineConfig:
 
 # ─── Output Formatters ───────────────────────────────────────────────────────
 
+
 def _fmt_time(seconds: float) -> str:
     """Format seconds as a human-readable duration."""
     if seconds == float("inf"):
@@ -227,7 +237,7 @@ def format_summary(cfg: PipelineConfig) -> str:
     )
     lines.append(
         f"Object store:      {cfg.object_store_memory_gb:.1f} GB per worker "
-        f"({cfg.object_store_proportion*100:.0f}%)"
+        f"({cfg.object_store_proportion * 100:.0f}%)"
     )
 
     # Docling
@@ -304,10 +314,10 @@ def format_cluster_config(cfg: PipelineConfig) -> str:
         "--- ClusterConfiguration (CodeFlare SDK) ---",
         "",
         "cluster_config = ClusterConfiguration(",
-        f'    name="ray-data-processor",',
-        f'    namespace="ray-docling",',
+        '    name="ray-data-processor",',
+        '    namespace="ray-docling",',
         "",
-        f"    # Head node — runs GCS, dashboard, job server (no actors)",
+        "    # Head node — runs GCS, dashboard, job server (no actors)",
         f"    head_cpu_requests={cfg.head_cpus},",
         f"    head_cpu_limits={cfg.head_cpus},",
         f"    head_memory_requests={cfg.head_memory_gb},",
@@ -362,7 +372,7 @@ def format_cluster_patch(cfg: PipelineConfig) -> str:
         "#   - enableInTreeAutoscaling=true (ensures all workers register)",
         "",
         "oc patch raycluster <CLUSTER_NAME> \\",
-        '    -n ray-docling --type json \\',
+        "    -n ray-docling --type json \\",
         f"    -p '{patch_json}'",
         "",
     ]
@@ -370,6 +380,7 @@ def format_cluster_patch(cfg: PipelineConfig) -> str:
 
 
 # ─── Interactive Mode ─────────────────────────────────────────────────────────
+
 
 def _prompt_int(prompt: str, default: int) -> int:
     """Prompt user for an integer with a default."""
@@ -420,22 +431,32 @@ def interactive_mode() -> dict:
     inputs["num_workers"] = _prompt_int("Number of worker pods", 8)
     inputs["worker_cpus"] = _prompt_int("CPUs per worker", 8)
     inputs["worker_memory_gb"] = _prompt_int("Memory per worker (GB)", 16)
-    inputs["head_cpus"] = _prompt_int("Head node CPUs (GCS, dashboard, job server)", DEFAULT_HEAD_CPUS)
-    inputs["head_memory_gb"] = _prompt_int("Head node memory (GB)", DEFAULT_HEAD_MEMORY_GB)
+    inputs["head_cpus"] = _prompt_int(
+        "Head node CPUs (GCS, dashboard, job server)", DEFAULT_HEAD_CPUS
+    )
+    inputs["head_memory_gb"] = _prompt_int(
+        "Head node memory (GB)", DEFAULT_HEAD_MEMORY_GB
+    )
 
     print()
     print("--- Actor Configuration ---")
-    inputs["cpus_per_actor"] = _prompt_int("CPUs per Docling actor", DEFAULT_CPUS_PER_ACTOR)
+    inputs["cpus_per_actor"] = _prompt_int(
+        "CPUs per Docling actor", DEFAULT_CPUS_PER_ACTOR
+    )
 
     print()
     print("--- Docling Options ---")
     inputs["do_ocr"] = _prompt_bool("Enable OCR", False)
-    inputs["do_table_structure"] = _prompt_bool("Enable table structure detection", True)
+    inputs["do_table_structure"] = _prompt_bool(
+        "Enable table structure detection", True
+    )
 
     print()
     print("--- Advanced (press Enter for defaults) ---")
     inputs["batch_size"] = _prompt_int("Batch size", DEFAULT_BATCH_SIZE)
-    inputs["repartition_factor"] = _prompt_int("Repartition factor", DEFAULT_REPARTITION_FACTOR)
+    inputs["repartition_factor"] = _prompt_int(
+        "Repartition factor", DEFAULT_REPARTITION_FACTOR
+    )
     inputs["object_store_proportion"] = _prompt_float(
         "Object store proportion", DEFAULT_OBJECT_STORE_PROPORTION
     )
@@ -444,6 +465,7 @@ def interactive_mode() -> dict:
 
 
 # ─── CLI Argument Parsing ─────────────────────────────────────────────────────
+
 
 def parse_args() -> argparse.Namespace:
     """Parse CLI arguments."""
@@ -460,35 +482,102 @@ Examples:
 
     # Mode
     parser.add_argument(
-        "--interactive", "-i", action="store_true",
+        "--interactive",
+        "-i",
+        action="store_true",
         help="Run in interactive prompt mode",
     )
 
     # Inputs
-    parser.add_argument("--num-files", type=int, default=10000, help="Number of PDF files (default: 10000)")
-    parser.add_argument("--num-workers", type=int, default=8, help="Number of Ray worker pods (default: 8)")
-    parser.add_argument("--worker-cpus", type=int, default=8, help="CPUs per worker (default: 8)")
-    parser.add_argument("--worker-memory", type=int, default=16, help="Memory per worker in GB (default: 16)")
-    parser.add_argument("--head-cpus", type=int, default=DEFAULT_HEAD_CPUS, help=f"Head node CPUs (default: {DEFAULT_HEAD_CPUS})")
-    parser.add_argument("--head-memory", type=int, default=DEFAULT_HEAD_MEMORY_GB, help=f"Head node memory in GB (default: {DEFAULT_HEAD_MEMORY_GB})")
-    parser.add_argument("--cpus-per-actor", type=int, default=DEFAULT_CPUS_PER_ACTOR, help=f"CPUs per Docling actor (default: {DEFAULT_CPUS_PER_ACTOR})")
-    parser.add_argument("--ocr", action="store_true", default=False, help="Enable OCR (default: off)")
-    parser.add_argument("--no-table-structure", action="store_true", default=False, help="Disable table structure detection")
-    parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE, help=f"Batch size (default: {DEFAULT_BATCH_SIZE})")
-    parser.add_argument("--repartition-factor", type=int, default=DEFAULT_REPARTITION_FACTOR, help=f"Repartition factor (default: {DEFAULT_REPARTITION_FACTOR})")
-    parser.add_argument("--object-store-proportion", type=float, default=DEFAULT_OBJECT_STORE_PROPORTION, help=f"Object store memory proportion (default: {DEFAULT_OBJECT_STORE_PROPORTION})")
+    parser.add_argument(
+        "--num-files",
+        type=int,
+        default=10000,
+        help="Number of PDF files (default: 10000)",
+    )
+    parser.add_argument(
+        "--num-workers",
+        type=int,
+        default=8,
+        help="Number of Ray worker pods (default: 8)",
+    )
+    parser.add_argument(
+        "--worker-cpus", type=int, default=8, help="CPUs per worker (default: 8)"
+    )
+    parser.add_argument(
+        "--worker-memory",
+        type=int,
+        default=16,
+        help="Memory per worker in GB (default: 16)",
+    )
+    parser.add_argument(
+        "--head-cpus",
+        type=int,
+        default=DEFAULT_HEAD_CPUS,
+        help=f"Head node CPUs (default: {DEFAULT_HEAD_CPUS})",
+    )
+    parser.add_argument(
+        "--head-memory",
+        type=int,
+        default=DEFAULT_HEAD_MEMORY_GB,
+        help=f"Head node memory in GB (default: {DEFAULT_HEAD_MEMORY_GB})",
+    )
+    parser.add_argument(
+        "--cpus-per-actor",
+        type=int,
+        default=DEFAULT_CPUS_PER_ACTOR,
+        help=f"CPUs per Docling actor (default: {DEFAULT_CPUS_PER_ACTOR})",
+    )
+    parser.add_argument(
+        "--ocr", action="store_true", default=False, help="Enable OCR (default: off)"
+    )
+    parser.add_argument(
+        "--no-table-structure",
+        action="store_true",
+        default=False,
+        help="Disable table structure detection",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=DEFAULT_BATCH_SIZE,
+        help=f"Batch size (default: {DEFAULT_BATCH_SIZE})",
+    )
+    parser.add_argument(
+        "--repartition-factor",
+        type=int,
+        default=DEFAULT_REPARTITION_FACTOR,
+        help=f"Repartition factor (default: {DEFAULT_REPARTITION_FACTOR})",
+    )
+    parser.add_argument(
+        "--object-store-proportion",
+        type=float,
+        default=DEFAULT_OBJECT_STORE_PROPORTION,
+        help=f"Object store memory proportion (default: {DEFAULT_OBJECT_STORE_PROPORTION})",
+    )
 
     # Output flags
-    parser.add_argument("--show-env", action="store_true", help="Print env vars for job submission")
-    parser.add_argument("--show-config", action="store_true", help="Print ClusterConfiguration snippet")
-    parser.add_argument("--show-patch", action="store_true", help="Print oc patch command")
-    parser.add_argument("--show-all", action="store_true", help="Print all code snippets")
-    parser.add_argument("--json", action="store_true", help="Output configuration as JSON")
+    parser.add_argument(
+        "--show-env", action="store_true", help="Print env vars for job submission"
+    )
+    parser.add_argument(
+        "--show-config", action="store_true", help="Print ClusterConfiguration snippet"
+    )
+    parser.add_argument(
+        "--show-patch", action="store_true", help="Print oc patch command"
+    )
+    parser.add_argument(
+        "--show-all", action="store_true", help="Print all code snippets"
+    )
+    parser.add_argument(
+        "--json", action="store_true", help="Output configuration as JSON"
+    )
 
     return parser.parse_args()
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
+
 
 def main():
     args = parse_args()
