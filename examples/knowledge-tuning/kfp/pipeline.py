@@ -1,3 +1,5 @@
+import kfp
+import kfp.kubernetes
 from components.document_processing import document_processing
 from components.download_docling_models import download_docling_models
 from components.knowledge_generation import (
@@ -9,8 +11,7 @@ from components.knowledge_generation import (
 )
 from components.knowledge_mixing import knowledge_mixing
 from kfp import compiler, dsl
-
-# from kfp_components.components.training.finetuning import train_model
+from kfp_components.components.training.finetuning import train_model
 
 PVC_SIZE = "80Gi"
 PVC_STORAGE_CLASS = "nfs-csi"
@@ -83,7 +84,7 @@ def convert_pipeline(
         icl_query2=icl_query2,
         icl_query3=icl_query3,
     )
-    document_processing_task.set_caching_options(False)
+    document_processing_task.set_caching_options(True)
 
     # Step 2: Knowledge Generation
     # Knowledge Generation - Generate 4 different types of datasets
@@ -98,7 +99,7 @@ def convert_pipeline(
         inference_timeout=inference_timeout,
         number_of_summaries=number_of_summaries,
     )
-    detailed_summary_task.set_caching_options(False)
+    detailed_summary_task.set_caching_options(True)
 
     extractive_summary_task = generate_extractive_summaries(
         input_dataset=document_processing_task.outputs["output_path"],
@@ -111,7 +112,7 @@ def convert_pipeline(
         max_concurrency=max_concurrency,
         inference_timeout=inference_timeout,
     )
-    extractive_summary_task.set_caching_options(False)
+    extractive_summary_task.set_caching_options(True)
 
     key_facts_summary_task = generate_key_facts_summary(
         input_dataset=document_processing_task.outputs["output_path"],
@@ -123,7 +124,7 @@ def convert_pipeline(
         max_concurrency=max_concurrency,
         inference_timeout=inference_timeout,
     )
-    key_facts_summary_task.set_caching_options(False)
+    key_facts_summary_task.set_caching_options(True)
 
     document_based_qa_task = generate_document_based_qa(
         input_dataset=document_processing_task.outputs["output_path"],
@@ -135,7 +136,7 @@ def convert_pipeline(
         max_concurrency=max_concurrency,
         inference_timeout=inference_timeout,
     )
-    document_based_qa_task.set_caching_options(False)
+    document_based_qa_task.set_caching_options(True)
 
     # Extractive summary is heavy on the inference server
     # So its not feasible to parallize this process with the dataset
@@ -149,7 +150,7 @@ def convert_pipeline(
         key_facts_data=key_facts_summary_task.outputs["output_path"],
         doc_qa_data=document_based_qa_task.outputs["output_path"],
     )
-    merged_dataset_task.set_caching_options(False)
+    merged_dataset_task.set_caching_options(True)
 
     # Step 3: Knowledge Mixing
     # Knowledge Mixing
@@ -160,7 +161,31 @@ def convert_pipeline(
         qa_per_doc=qa_per_doc,
         save_gpt_oss_format=save_gpt_oss_format,
     )
-    knowledge_mixing_task.set_caching_options(False)
+    knowledge_mixing_task.set_caching_options(True)
+
+    # Step 4:
+    # Model Finetuning
+    train_model_task = train_model(
+        pvc_path=dsl.WORKSPACE_PATH_PLACEHOLDER,
+        dataset=knowledge_mixing_task.outputs["dataset_file"],
+        training_base_model=student_model_name,
+        training_resource_gpu_per_worker=training_resource_gpu_per_worker,
+        training_num_epochs=training_num_epochs,
+        training_effective_batch_size=training_effective_batch_size,
+        training_resource_memory_per_worker=training_resource_memory_per_worker,
+    )
+
+    # Pass the required secrets to the training step
+    kfp.kubernetes.use_secret_as_env(
+        task=train_model_task,
+        secret_name="kubernetes-credentials",  # pragma: allowlist secret
+        secret_key_to_env={
+            "KUBERNETES_SERVER_URL": "KUBERNETES_SERVER_URL",
+            "KUBERNETES_AUTH_TOKEN": "KUBERNETES_AUTH_TOKEN",  # pragma: allowlist secret
+            "HF_TOKEN": "HF_TOKEN",  # pragma: allowlist secret
+        },
+        optional=False,
+    )
 
 
 if __name__ == "__main__":
