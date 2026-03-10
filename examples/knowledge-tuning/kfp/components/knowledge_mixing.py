@@ -18,11 +18,12 @@ BASE_IMAGE = "quay.io/opendatahub/odh-training-th04-cpu-torch29-py312-rhel9:cpu-
 def knowledge_mixing(
     datasets_path: Input[dsl.Artifact],
     output_path: Output[dsl.Artifact],
+    dataset_file: Output[dsl.Dataset],
     tokenizer_model_name: str = "RedHatAI/Llama-3.1-8B-Instruct",
-    cut_size: str = "5,10",
+    cut_size: str = "1,5,10",
     qa_per_doc: int = 3,
     save_gpt_oss_format: bool = False,
-):
+) -> str:
 
     #########################################
     # UTILITY FUNCTION FOR KNOWLEDGE MIXING #
@@ -529,6 +530,7 @@ def knowledge_mixing(
             combined_dataset.to_json(output_path, orient="records", lines=True)
 
             # Print results
+            print("\n\n\n\n", "=" * 50)
             print(f"   Saved to: {output_path}")
             print(f"   Total samples: {len(combined_dataset)}")
             print(f"   Total tokens: {total_tokens:,}")
@@ -632,3 +634,30 @@ def knowledge_mixing(
 
     # Print final summary
     print_final_summary(token_count)
+    print("\n\n\n")
+    # Find the biggest cut size possible when mixing
+    import re
+
+    # Find all files matching the pattern in the current directory
+    files = Path(output_path.path).glob("combined_cut_*x.jsonl")
+
+    print(files)
+    # Extract the number 'N' from 'combined_cut_Nx.jsonl' and find the max
+    biggest_file = max(
+        files,
+        key=lambda f: int(re.search(r"combined_cut_(\d+)x\.jsonl", f.name).group(1)),
+        default=None,
+    )
+
+    import shutil
+
+    print("\n\n\n\n", biggest_file, "\n\n\n\n")
+    shutil.copy(biggest_file, dataset_file.path)
+
+    if biggest_file:
+        print(f"The file with the biggest cut size is: {biggest_file.name}")
+        print(str(biggest_file))
+    else:
+        print("No matching files found.")
+
+    return str(biggest_file)

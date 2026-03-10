@@ -17,6 +17,7 @@ DOCLING_BASE_IMAGE = "quay.io/fabianofranz/docling-ubi9:2.54.0"
 def document_processing(
     artifacts_path: dsl.Input[dsl.Artifact],
     output_path: dsl.Output[dsl.Artifact],
+    web_urls: str = "",
     chunk_max_tokens: int = 512,
     chunk_overlap_tokens: int = 50,
     domain: str = None,
@@ -51,12 +52,12 @@ def document_processing(
         parents=True, exist_ok=True
     )  # Create docling output directory if it does not exist
 
-    WEB_URLS = [
-        (
-            "BMO_data",
-            "https://fintrac-canafe.canada.ca/guidance-directives/client-clientele/Guide11/11-eng",
-        )
-    ]
+    WEB_URLS = []
+    for idx, url in enumerate(web_urls.split(",")):
+        WEB_URLS.append((
+            f"url-{idx + 1}",
+            url,
+        ))
 
     # Let Docling use the default cache location where models were downloaded
     pdf_pipeline_options = PdfPipelineOptions()

@@ -8,7 +8,7 @@ BASE_IMAGE = "quay.io/fabianofranz/docling-ubi9:2.54.0"
     base_image=BASE_IMAGE,
     packages_to_install=[
         "nest-asyncio",
-        "sdg-hub==0.6.0",
+        "sdg-hub>=0.6.0",
         "datasets>=3.6.0",
     ],
 )
@@ -70,14 +70,20 @@ def generate_extractive_summaries(
         enable_reasoning=enable_reasoning,
     )
 
-    runtime_params = {}
+    runtime_params = {
+        "gen_extractive_summary": {"n": number_of_summaries},
+    }
     if enable_reasoning:
-        runtime_params = {
-            "question_generation": {"max_tokens": 1024},
-            "gen_detailed_summary": {"n": number_of_summaries, "max_tokens": 6000},
-        }
-    else:
-        runtime_params = {"gen_extractive_summary": {"n": number_of_summaries}}
+        runtime_params["gen_extractive_summary"]["max_tokens"] = 6000
+        runtime_params["question_generation"] = {"max_tokens": 1024}
+    # runtime_params = {}
+    # if enable_reasoning:
+    #     runtime_params = {
+    #         "question_generation": {"max_tokens": 1024},
+    #         "gen_detailed_summary": {"n": number_of_summaries, "max_tokens": 6000},
+    #     }
+    # else:
+    #     runtime_params = {"gen_extractive_summary": {"n": number_of_summaries}}
 
     print("Starting generation...")
     generated_data = flow.generate(
@@ -93,7 +99,7 @@ def generate_extractive_summaries(
     base_image=BASE_IMAGE,
     packages_to_install=[
         "nest-asyncio",
-        "sdg-hub==0.6.0",
+        "sdg-hub>=0.6.0",
         "datasets>=3.6.0",
     ],
 )
@@ -175,7 +181,7 @@ def generate_detailed_summaries(
     base_image=BASE_IMAGE,
     packages_to_install=[
         "nest-asyncio",
-        "sdg-hub==0.6.0",
+        "sdg-hub>=0.6.0",
         "datasets>=3.6.0",
     ],
 )
@@ -252,7 +258,7 @@ def generate_key_facts_summary(
     base_image=BASE_IMAGE,
     packages_to_install=[
         "nest-asyncio",
-        "sdg-hub==0.6.0",
+        "sdg-hub>=0.6.0",
         "datasets>=3.6.0",
     ],
 )
