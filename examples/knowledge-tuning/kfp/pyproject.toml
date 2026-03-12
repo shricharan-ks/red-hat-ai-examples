@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "docker>=7.1.0",
-    "kfp-components @ git+https://github.com/kubeflow/pipelines-components@main",
+    "kfp-kubernetes>=2.15.2",
     "kfp==2.15.2",
+    "kfp-components @ git+https://github.com/red-hat-data-services/pipelines-components@main",
 ]
