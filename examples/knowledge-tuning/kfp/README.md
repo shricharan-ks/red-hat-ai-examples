@@ -62,7 +62,7 @@ Fine-tunes a student model using the mixed knowledge dataset:
 |-----------|------|---------|-------------|
 | `chunk_max_tokens` | int | 512 | Maximum tokens per document chunk |
 | `chunk_overlap_tokens` | int | 50 | Overlapping tokens between consecutive chunks |
-| `web_urls` | str | "None" | List of web urls seperated by , |
+| `web_urls` | str | "None" | List of web urls separated by , |
 | `domain` | str | "None" | Domain context for the documents |
 | `domain_outline` | str | "None" | Outline or structure of the domain |
 | `icl_document` | str | "None" | In-context learning example document |
