@@ -109,8 +109,10 @@ succeeds), **do not apply the snippet below.** That YAML is a full spec:
 sqlite, `replicas: 1`, and `providers: [garak]` only. Applying it would
 replace a shared PostgreSQL instance and drop other providers. Instead,
 inspect the existing CR, then open it for editing. Add `garak` to
-`spec.providers` and `MLFLOW_TRACKING_URI` to `spec.env` only if they are
-missing. This preserves the existing database, providers, and environment
+`spec.providers` only if it is missing. Under `spec.env`, locate the
+`MLFLOW_TRACKING_URI` entry: set its `value` to the URI resolved above if it
+differs, or add the entry if it is missing. Do not replace the full `env`
+list; this preserves all unrelated database, provider, and environment
 entries:
 
 ```bash
