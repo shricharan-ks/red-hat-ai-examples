@@ -86,6 +86,7 @@ production, use PostgreSQL as described in
 ```bash
 NAMESPACE=$(oc project -q)
 USER_NAME=$(oc whoami)
+TOKEN=$(oc whoami -t)
 MLFLOW_NAMESPACE=redhat-ods-applications
 MLFLOW_TRACKING_URI=$(oc get mlflow mlflow -n "${MLFLOW_NAMESPACE}" \
   -o jsonpath='{.status.address.url}')
@@ -107,11 +108,14 @@ the dashboard URL: EvalHub must reach MLflow from its own pod.
 succeeds), **do not apply the snippet below.** That YAML is a full spec:
 sqlite, `replicas: 1`, and `providers: [garak]` only. Applying it would
 replace a shared PostgreSQL instance and drop other providers. Instead,
-inspect the existing CR and add `garak` to `spec.providers` plus
-`MLFLOW_TRACKING_URI` in `spec.env` if they are missing:
+inspect the existing CR, then open it for editing. Add `garak` to
+`spec.providers` and `MLFLOW_TRACKING_URI` to `spec.env` only if they are
+missing. This preserves the existing database, providers, and environment
+entries:
 
 ```bash
 oc get evalhub evalhub -n "${NAMESPACE}" -o yaml
+oc edit evalhub evalhub -n "${NAMESPACE}"
 ```
 
 **If EvalHub is not installed yet**, apply the CR using the resolved
@@ -211,8 +215,14 @@ oc wait --for=condition=available deployment/evalhub \
   -n "${NAMESPACE}" --timeout=180s
 oc get pods -n "${NAMESPACE}" -l app=eval-hub
 
-oc exec deployment/evalhub -n "${NAMESPACE}" -- \
-  curl -fsS --max-time 10 "${MLFLOW_TRACKING_URI}/health"
+oc exec deployment/evalhub -n "${NAMESPACE}" -c evalhub -- sh -c '
+  if [ -n "${MLFLOW_CA_CERT_PATH:-}" ]; then
+    curl -fsS --max-time 10 --cacert "${MLFLOW_CA_CERT_PATH}" \
+      "${MLFLOW_TRACKING_URI}/health"
+  else
+    curl -fsS --max-time 10 "${MLFLOW_TRACKING_URI}/health"
+  fi
+'
 
 EVALHUB_ROUTE=$(oc get route evalhub -n "${NAMESPACE}" -o jsonpath='{.spec.host}')
 
@@ -726,7 +736,7 @@ For mapping scan results to guardrails mitigations, see
 |---|---|---|
 | Garak scan fails with `404` | Agent missing `/v1/chat/completions` route | This agent already has it (line 267 of `main.py`). If you modify the agent, keep the `/v1` alias — Garak's evalhub adapter always appends `/v1` to the model URL |
 | Scan hangs or takes days | Agent returning HTTP 500 on adversarial prompts; Garak retries 500s indefinitely | This agent has `_invoke_with_retry` which returns 200 after 3 retries. If you see 500s in logs, check for new exception types not in `_RETRYABLE_EXCEPTIONS` |
-| `Forbidden` on job submission | Missing RBAC permissions | Use `oc whoami -t` for the bearer token; ensure the user has `evaluations` verb on `trustyai.opendatahub.io`. See [Grant access to EvalHub](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.5/html/evaluating_ai_systems/evaluating-llms-with-evalhub_evaluate) (§2.29) |
+| `Forbidden` on job submission | Missing RBAC permissions | Use `oc whoami -t` for the bearer token; ensure the user has the `create` verb on `evaluations.trustyai.opendatahub.io`. See [Grant access to EvalHub](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.5/html/evaluating_ai_systems/evaluating-llms-with-evalhub_evaluate) (§2.29) |
 | EvalHub CR never becomes available | TrustyAI not Managed, CRD missing, or operator not reconciling | Confirm `trustyai.managementState: Managed`, `oc get crd evalhubs.trustyai.opendatahub.io`, `oc get pods -l app=eval-hub`, and TrustyAI operator logs |
 | `garak` missing from providers list | `garak` not listed in `spec.providers` | Edit the EvalHub CR to include `- garak` under `spec.providers`, then re-check `/api/v1/evaluations/providers` |
 | Scan results not visible in RHOAI dashboard | Missing `experiment` block in the scan submission | Add an `experiment` block — without it, results are only available via the EvalHub API. See [MLflow Experiment Tracking](docs/scan-configuration.md#mlflow-experiment-tracking) |
