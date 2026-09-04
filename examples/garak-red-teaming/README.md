@@ -17,7 +17,7 @@ your own.
 > **Endpoint requirement:** Garak's EvalHub adapter always appends `/v1` to
 > the model URL, then calls `/v1/chat/completions`. Your agent must respond
 > on that path. This agent already includes the `/v1` route alias
-> ([main.py:267](main.py#L267)). If you use a different agent, add a
+> ([main.py:254](main.py#L254)). If you use a different agent, add a
 > `/v1/chat/completions` route or ensure your framework serves it by default.
 
 You will:
@@ -54,23 +54,217 @@ no changes to the agent's source code are needed.
 
 - **RHOAI 3.5+** with TrustyAI operator enabled
   (`trustyai.managementState: Managed` in the DataScienceCluster CR)
-- **EvalHub** instance deployed in your namespace
+- **EvalHub** CR in this namespace (steps below)
 - **LLM endpoint** — a vLLM or compatible model serving endpoint accessible
   from within the cluster
 - **CLI tools:** `oc` (authenticated), `helm`, `make`, `curl`
 - **Container build:** Podman or Docker (for local builds), or use in-cluster
   `BuildConfig` (no local tools needed)
 
-### Verify prerequisites
+### Verify TrustyAI operator
 
 ```bash
-# TrustyAI operator
 oc get crd nemoguardrails.trustyai.opendatahub.io
-
-# EvalHub
-oc get evalhub -n ${NAMESPACE}
-oc get pods -n ${NAMESPACE} -l app=eval-hub
+oc get crd evalhubs.trustyai.opendatahub.io
 ```
+
+### Deploy EvalHub (enables Garak)
+
+There is no Garak-specific custom resource. Garak is a built-in EvalHub
+provider. Creating an `EvalHub` CR with `garak` in `spec.providers` enables
+Garak scans in this namespace.
+
+Creating the CR and labeling the namespace requires cluster-admin (or
+equivalent). MLflow must already be running on the cluster — EvalHub only
+logs to it; it does not install it.
+
+This walkthrough uses **in-memory sqlite** so you do not need a PostgreSQL
+secret. All EvalHub job state is lost if the EvalHub pod restarts. For
+production, use PostgreSQL as described in
+[Deploy EvalHub with the TrustyAI Operator](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.5/html/evaluating_ai_systems/evaluating-llms-with-evalhub_evaluate).
+
+```bash
+NAMESPACE=$(oc project -q)
+EVALHUB_NAMESPACE="${NAMESPACE}" # Use a separate namespace for a shared EvalHub
+USER_NAME=$(oc whoami)
+TOKEN=$(oc whoami -t)
+MLFLOW_NAMESPACE=redhat-ods-applications
+MLFLOW_TRACKING_URI=$(oc get mlflow mlflow -n "${MLFLOW_NAMESPACE}" \
+  -o jsonpath='{.status.address.url}')
+
+if [ -z "${MLFLOW_TRACKING_URI}" ]; then
+  echo "Could not resolve the MLflow tracking URI. Set MLFLOW_TRACKING_URI to an in-cluster URL reachable from EvalHub."
+  exit 1
+fi
+
+echo "MLflow: ${MLFLOW_TRACKING_URI}"
+```
+
+The command resolves the in-cluster URL published by the RHOAI-managed MLflow
+resource. If your cluster uses a separately managed MLflow instance, replace
+`MLFLOW_TRACKING_URI` with that instance's in-cluster tracking URL. Do not use
+the dashboard URL: EvalHub must reach MLflow from its own pod.
+
+**If a dedicated EvalHub already exists in your namespace** (`oc get evalhub evalhub -n "${NAMESPACE}"`
+succeeds), **do not apply the snippet below.** That YAML is a full spec:
+sqlite, `replicas: 1`, and `providers: [garak]` only. Applying it would
+replace a shared PostgreSQL instance and drop other providers. Instead,
+inspect the existing CR, then open it for editing. Add `garak` to
+`spec.providers` only if it is missing. Under `spec.env`, locate the
+`MLFLOW_TRACKING_URI` entry: set its `value` to the URI resolved above if it
+differs, or add the entry if it is missing. Do not replace the full `env`
+list; this preserves all unrelated database, provider, and environment
+entries:
+
+```bash
+oc get evalhub evalhub -n "${NAMESPACE}" -o yaml
+oc edit evalhub evalhub -n "${NAMESPACE}"
+```
+
+**If EvalHub is not installed yet**, apply the CR using the resolved
+`MLFLOW_TRACKING_URI`:
+
+```bash
+oc apply -n "${NAMESPACE}" -f - <<EOF
+apiVersion: trustyai.opendatahub.io/v1
+kind: EvalHub
+metadata:
+  name: evalhub
+spec:
+  replicas: 1
+  database:
+    type: sqlite
+  providers:
+    - garak
+  env:
+    - name: MLFLOW_TRACKING_URI
+      value: "${MLFLOW_TRACKING_URI}"
+EOF
+```
+
+**If EvalHub is shared from another namespace**, do not apply or edit an
+EvalHub CR in your tenant namespace. Set `EVALHUB_NAMESPACE` to the namespace
+that hosts the shared instance, then verify that instance. Its administrator
+must configure the `garak` provider and `MLFLOW_TRACKING_URI`; continue with
+the tenant label and RBAC steps below using `NAMESPACE`.
+
+```bash
+EVALHUB_NAMESPACE=evalhub-system # replace with the shared EvalHub namespace
+oc get evalhub evalhub -n "${EVALHUB_NAMESPACE}"
+```
+
+If the sidecar cannot verify the MLflow TLS certificate, set
+`MLFLOW_CA_CERT_PATH` (or, for testing only, `MLFLOW_INSECURE_SKIP_VERIFY`)
+as described in the MLflow configuration section of the same product
+chapter (§2.26.3).
+
+Label the namespace as an EvalHub tenant. The label value is empty on
+purpose — the operator checks that the key is present, not its value.
+The operator then provisions the *job* ServiceAccount, RoleBindings, and
+MLflow access used by scan pods
+([Set up a tenant namespace](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.5/html/evaluating_ai_systems/evaluating-llms-with-evalhub_evaluate),
+§2.28).
+
+The tenant label does **not** grant your user token permission to call
+the EvalHub API. Before the verify curls and the Step 3 job POST, grant the
+current user the minimum permissions this walkthrough uses. This includes
+MLflow `experiments`, which enables the tracked scan in Step 3
+([Grant access to EvalHub](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.5/html/evaluating_ai_systems/evaluating-llms-with-evalhub_evaluate),
+§2.29).
+
+```bash
+oc label namespace "${NAMESPACE}" \
+  evalhub.trustyai.opendatahub.io/tenant= --overwrite
+
+oc apply -f - <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: garak-evalhub-user
+  namespace: ${NAMESPACE}
+rules:
+  - apiGroups: ["trustyai.opendatahub.io"]
+    resources: ["evaluations"]
+    verbs: ["get", "list", "create"]
+  - apiGroups: ["trustyai.opendatahub.io"]
+    resources: ["providers"]
+    verbs: ["get", "list"]
+  - apiGroups: ["mlflow.kubeflow.org"]
+    resources: ["experiments"]
+    verbs: ["get", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: garak-evalhub-user
+  namespace: ${NAMESPACE}
+subjects:
+  - kind: User
+    name: ${USER_NAME}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: garak-evalhub-user
+EOF
+
+oc auth can-i create evaluations.trustyai.opendatahub.io \
+  -n "${NAMESPACE}"
+oc auth can-i list providers.trustyai.opendatahub.io \
+  -n "${NAMESPACE}"
+oc auth can-i create experiments.mlflow.kubeflow.org \
+  -n "${NAMESPACE}"
+```
+
+Each permission check must return `yes`. For automation or shared access,
+bind a dedicated ServiceAccount or group instead; do not reuse this
+user-specific RoleBinding.
+
+Wait for the EvalHub pod, then verify health and that Garak is registered.
+If these curls fail with a certificate error, export `CURL_CA_BUNDLE` to
+the cluster CA (also noted under environment variables below):
+
+```bash
+oc get evalhub evalhub -n "${EVALHUB_NAMESPACE}"
+oc wait --for=condition=available deployment/evalhub \
+  -n "${EVALHUB_NAMESPACE}" --timeout=180s
+oc get pods -n "${EVALHUB_NAMESPACE}" -l app=eval-hub
+
+oc exec deployment/evalhub -n "${EVALHUB_NAMESPACE}" -c evalhub -- sh -c '
+  if [ -n "${MLFLOW_CA_CERT_PATH:-}" ]; then
+    curl -fsS --max-time 10 --cacert "${MLFLOW_CA_CERT_PATH}" \
+      "${MLFLOW_TRACKING_URI}/health"
+  else
+    curl -fsS --max-time 10 "${MLFLOW_TRACKING_URI}/health"
+  fi
+'
+
+EVALHUB_ROUTE=$(oc get route evalhub -n "${EVALHUB_NAMESPACE}" -o jsonpath='{.spec.host}')
+
+curl -s -H "Authorization: Bearer ${TOKEN}" \
+  "https://${EVALHUB_ROUTE}/api/v1/health"
+
+curl -s -H "Authorization: Bearer ${TOKEN}" \
+  -H "X-Tenant: ${NAMESPACE}" \
+  "https://${EVALHUB_ROUTE}/api/v1/evaluations/providers"
+```
+
+The providers response should include an entry whose id or name is `garak`.
+
+#### MLflow result submission
+
+EvalHub logs Garak results to MLflow in two layers:
+
+1. **CR** — `MLFLOW_TRACKING_URI` in `spec.env` enables the EvalHub-to-MLflow
+   integration. Without this variable, job `experiment` blocks do not appear
+   in the RHOAI Experiments dashboard.
+2. **Job** — the `experiment` block in `POST /api/v1/evaluations/jobs`
+   creates the MLflow run (name, tags, metrics). Step 3 includes this block.
+   See
+   [MLflow Experiment Tracking](docs/scan-configuration.md#mlflow-experiment-tracking)
+   for what gets logged and how to compare baseline vs guardrailed runs.
+
+The EvalHub sidecar authenticates to MLflow with a projected ServiceAccount
+token. You do not set an MLflow password in this walkthrough.
 
 ### Set up environment variables
 
@@ -78,10 +272,11 @@ Define these once — every command in this walkthrough references them:
 
 ```bash
 NAMESPACE=$(oc project -q)
+EVALHUB_NAMESPACE="${EVALHUB_NAMESPACE:-${NAMESPACE}}"
 MODEL_ID=qwen2-5-7b-instruct                  # change to your model
 TOKEN=$(oc whoami -t)
 AGENT_SVC="http://langgraph-react-agent.${NAMESPACE}.svc.cluster.local:8080"
-EVALHUB_ROUTE=$(oc get route evalhub -n ${NAMESPACE} -o jsonpath='{.spec.host}')
+EVALHUB_ROUTE=$(oc get route evalhub -n "${EVALHUB_NAMESPACE}" -o jsonpath='{.spec.host}')
 
 echo "Namespace:  ${NAMESPACE}"
 echo "Model:      ${MODEL_ID}"
@@ -232,7 +427,9 @@ echo "JOB_ID=${JOB_ID}"
 >
 > **MLflow:** The `experiment` block is optional but recommended — it
 > pushes results to the RHOAI Experiments dashboard for comparison.
-> Without it, results are only available via the EvalHub API. See
+> Without it, results are only available via the EvalHub API. The EvalHub
+> CR must also set `MLFLOW_TRACKING_URI` (see
+> [Deploy EvalHub (enables Garak)](#deploy-evalhub-enables-garak)). See
 > [docs/scan-configuration.md — MLflow Experiment Tracking](docs/scan-configuration.md#mlflow-experiment-tracking)
 > for details on what gets logged.
 
@@ -552,15 +749,18 @@ For mapping scan results to guardrails mitigations, see
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Garak scan fails with `404` | Agent missing `/v1/chat/completions` route | This agent already has it (line 267 of `main.py`). If you modify the agent, keep the `/v1` alias — Garak's evalhub adapter always appends `/v1` to the model URL |
+| Garak scan fails with `404` | Agent missing `/v1/chat/completions` route | This agent already has it (line 254 of `main.py`). If you modify the agent, keep the `/v1` alias — Garak's evalhub adapter always appends `/v1` to the model URL |
 | Scan hangs or takes days | Agent returning HTTP 500 on adversarial prompts; Garak retries 500s indefinitely | This agent has `_invoke_with_retry` which returns 200 after 3 retries. If you see 500s in logs, check for new exception types not in `_RETRYABLE_EXCEPTIONS` |
-| `Forbidden` on job submission | Missing RBAC permissions | Use `oc whoami -t` for the bearer token; ensure the user has `evaluations` verb on `trustyai.opendatahub.io` |
+| `Forbidden` on job submission | Missing RBAC permissions | Use `oc whoami -t` for the bearer token; ensure the user has the `create` verb on `evaluations.trustyai.opendatahub.io`. See [Grant access to EvalHub](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.5/html/evaluating_ai_systems/evaluating-llms-with-evalhub_evaluate) (§2.29) |
+| EvalHub CR never becomes available | TrustyAI not Managed, CRD missing, or operator not reconciling | Confirm `trustyai.managementState: Managed`, `oc get crd evalhubs.trustyai.opendatahub.io`, `oc get pods -l app=eval-hub`, and TrustyAI operator logs |
+| `garak` missing from providers list | `garak` not listed in `spec.providers` | Edit the EvalHub CR to include `- garak` under `spec.providers`, then re-check `/api/v1/evaluations/providers` |
+| Scan results not visible in RHOAI dashboard | Missing `experiment` block in the scan submission | Add an `experiment` block — without it, results are only available via the EvalHub API. See [MLflow Experiment Tracking](docs/scan-configuration.md#mlflow-experiment-tracking) |
+| Scan completes but Experiments is still empty | `MLFLOW_TRACKING_URI` missing or wrong on the EvalHub CR | Set `MLFLOW_TRACKING_URI` in `spec.env` to the in-cluster tracking URI. This is distinct from a missing job `experiment` block |
 | Agent unreachable from EvalHub | Network policy or wrong service URL | Test from inside the cluster: `oc exec <evalhub-pod> -- curl <agent-svc>:8080/health` |
 | Baseline scan timeouts after applying guardrails | Agent `BASE_URL` changed mid-scan; sidecar proxy times out on extra guardrails hop | Wait for baseline scan to complete before changing `BASE_URL` in Step 5. Use `quick` benchmark for fast iteration |
 | Guardrails pod not starting | Missing CRD or ConfigMap | Verify: `oc get crd nemoguardrails.trustyai.opendatahub.io` and `oc get configmap langgraph-react-agent-guardrails-config` |
 | Guardrails not blocking unsafe content | Self-check accuracy depends on model | Try a more capable model, or switch to the nemoguard profile with dedicated NIM classifiers |
 | `quality` scan with guardrails times out | Self-check guardrails add 2–3 extra LLM calls per request; EvalHub sidecar proxy has a 30s timeout | Use `quick` benchmark for guardrailed scans (blocks are fast). For `quality`, the scans will still progress — garak retries timeouts — but take much longer |
-| Scan results not visible in RHOAI dashboard | Missing `experiment` block in the scan submission | Add an `experiment` block — without it, results are only available via the EvalHub API. See [MLflow Experiment Tracking](docs/scan-configuration.md#mlflow-experiment-tracking) |
 | vLLM becomes unresponsive during long scans | Concurrent scans or retries saturate the LLM's request queue | Delete the scan job, then restart the vLLM pod. Don't run concurrent scans against the same LLM |
 
 ## References
@@ -568,6 +768,7 @@ For mapping scan results to guardrails mitigations, see
 - [Garak Documentation](https://docs.garak.ai/)
 - [NeMo Guardrails Documentation](https://docs.nvidia.com/nemo/guardrails/)
 - [RHOAI NeMo Guardrails Docs](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/latest/html/enabling_ai_safety_with_guardrails/enabling-ai-safety-with-nemo-guardrails_nemo-guardrails)
+- [Deploy EvalHub with the TrustyAI Operator](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.5/html/evaluating_ai_systems/evaluating-llms-with-evalhub_evaluate)
 - [AVID Taxonomy](https://avidml.org/taxonomy)
 - [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
 - [LangGraph Documentation](https://docs.langchain.com/oss/python/langgraph/overview)
