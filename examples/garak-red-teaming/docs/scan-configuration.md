@@ -312,8 +312,22 @@ Per-benchmark results include:
 ## MLflow Experiment Tracking
 
 EvalHub can push garak scan results to MLflow so you can view, compare, and
-track scans over time in the RHOAI dashboard. This section covers how the
-integration works and how to use it effectively.
+track scans over time in the RHOAI dashboard. This requires configuration in
+both the EvalHub custom resource (CR) and each submitted job.
+
+### Required configuration
+
+1. **EvalHub CR** — Set `MLFLOW_TRACKING_URI` in `spec.env` to an in-cluster
+   MLflow tracking URL reachable from the EvalHub pod. This enables the
+   EvalHub-to-MLflow integration. Without it, job-level `experiment` blocks do
+   not appear in the RHOAI Experiments dashboard.
+2. **Job submission** — Include an `experiment` block in the
+   `POST /api/v1/evaluations/jobs` payload. It creates the MLflow run and
+   supplies its name and optional tags.
+
+The CR is configured once by the EvalHub administrator. The `experiment`
+block is configured for each scan; setting only one of these layers is not
+sufficient to record the scan in MLflow.
 
 ### How it works
 

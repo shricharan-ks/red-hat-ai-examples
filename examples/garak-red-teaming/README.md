@@ -17,7 +17,7 @@ your own.
 > **Endpoint requirement:** Garak's EvalHub adapter always appends `/v1` to
 > the model URL, then calls `/v1/chat/completions`. Your agent must respond
 > on that path. This agent already includes the `/v1` route alias
-> ([main.py:267](main.py#L267)). If you use a different agent, add a
+> ([main.py:254](main.py#L254)). If you use a different agent, add a
 > `/v1/chat/completions` route or ensure your framework serves it by default.
 
 You will:
@@ -85,6 +85,7 @@ production, use PostgreSQL as described in
 
 ```bash
 NAMESPACE=$(oc project -q)
+EVALHUB_NAMESPACE="${NAMESPACE}" # Use a separate namespace for a shared EvalHub
 USER_NAME=$(oc whoami)
 TOKEN=$(oc whoami -t)
 MLFLOW_NAMESPACE=redhat-ods-applications
@@ -104,7 +105,7 @@ resource. If your cluster uses a separately managed MLflow instance, replace
 `MLFLOW_TRACKING_URI` with that instance's in-cluster tracking URL. Do not use
 the dashboard URL: EvalHub must reach MLflow from its own pod.
 
-**If EvalHub already exists** (`oc get evalhub evalhub -n "${NAMESPACE}"`
+**If a dedicated EvalHub already exists in your namespace** (`oc get evalhub evalhub -n "${NAMESPACE}"`
 succeeds), **do not apply the snippet below.** That YAML is a full spec:
 sqlite, `replicas: 1`, and `providers: [garak]` only. Applying it would
 replace a shared PostgreSQL instance and drop other providers. Instead,
@@ -139,6 +140,17 @@ spec:
     - name: MLFLOW_TRACKING_URI
       value: "${MLFLOW_TRACKING_URI}"
 EOF
+```
+
+**If EvalHub is shared from another namespace**, do not apply or edit an
+EvalHub CR in your tenant namespace. Set `EVALHUB_NAMESPACE` to the namespace
+that hosts the shared instance, then verify that instance. Its administrator
+must configure the `garak` provider and `MLFLOW_TRACKING_URI`; continue with
+the tenant label and RBAC steps below using `NAMESPACE`.
+
+```bash
+EVALHUB_NAMESPACE=evalhub-system # replace with the shared EvalHub namespace
+oc get evalhub evalhub -n "${EVALHUB_NAMESPACE}"
 ```
 
 If the sidecar cannot verify the MLflow TLS certificate, set
@@ -212,12 +224,12 @@ If these curls fail with a certificate error, export `CURL_CA_BUNDLE` to
 the cluster CA (also noted under environment variables below):
 
 ```bash
-oc get evalhub evalhub -n "${NAMESPACE}"
+oc get evalhub evalhub -n "${EVALHUB_NAMESPACE}"
 oc wait --for=condition=available deployment/evalhub \
-  -n "${NAMESPACE}" --timeout=180s
-oc get pods -n "${NAMESPACE}" -l app=eval-hub
+  -n "${EVALHUB_NAMESPACE}" --timeout=180s
+oc get pods -n "${EVALHUB_NAMESPACE}" -l app=eval-hub
 
-oc exec deployment/evalhub -n "${NAMESPACE}" -c evalhub -- sh -c '
+oc exec deployment/evalhub -n "${EVALHUB_NAMESPACE}" -c evalhub -- sh -c '
   if [ -n "${MLFLOW_CA_CERT_PATH:-}" ]; then
     curl -fsS --max-time 10 --cacert "${MLFLOW_CA_CERT_PATH}" \
       "${MLFLOW_TRACKING_URI}/health"
@@ -226,7 +238,7 @@ oc exec deployment/evalhub -n "${NAMESPACE}" -c evalhub -- sh -c '
   fi
 '
 
-EVALHUB_ROUTE=$(oc get route evalhub -n "${NAMESPACE}" -o jsonpath='{.spec.host}')
+EVALHUB_ROUTE=$(oc get route evalhub -n "${EVALHUB_NAMESPACE}" -o jsonpath='{.spec.host}')
 
 curl -s -H "Authorization: Bearer ${TOKEN}" \
   "https://${EVALHUB_ROUTE}/api/v1/health"
@@ -260,10 +272,11 @@ Define these once — every command in this walkthrough references them:
 
 ```bash
 NAMESPACE=$(oc project -q)
+EVALHUB_NAMESPACE="${EVALHUB_NAMESPACE:-${NAMESPACE}}"
 MODEL_ID=qwen2-5-7b-instruct                  # change to your model
 TOKEN=$(oc whoami -t)
 AGENT_SVC="http://langgraph-react-agent.${NAMESPACE}.svc.cluster.local:8080"
-EVALHUB_ROUTE=$(oc get route evalhub -n ${NAMESPACE} -o jsonpath='{.spec.host}')
+EVALHUB_ROUTE=$(oc get route evalhub -n "${EVALHUB_NAMESPACE}" -o jsonpath='{.spec.host}')
 
 echo "Namespace:  ${NAMESPACE}"
 echo "Model:      ${MODEL_ID}"
@@ -736,7 +749,7 @@ For mapping scan results to guardrails mitigations, see
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Garak scan fails with `404` | Agent missing `/v1/chat/completions` route | This agent already has it (line 267 of `main.py`). If you modify the agent, keep the `/v1` alias — Garak's evalhub adapter always appends `/v1` to the model URL |
+| Garak scan fails with `404` | Agent missing `/v1/chat/completions` route | This agent already has it (line 254 of `main.py`). If you modify the agent, keep the `/v1` alias — Garak's evalhub adapter always appends `/v1` to the model URL |
 | Scan hangs or takes days | Agent returning HTTP 500 on adversarial prompts; Garak retries 500s indefinitely | This agent has `_invoke_with_retry` which returns 200 after 3 retries. If you see 500s in logs, check for new exception types not in `_RETRYABLE_EXCEPTIONS` |
 | `Forbidden` on job submission | Missing RBAC permissions | Use `oc whoami -t` for the bearer token; ensure the user has the `create` verb on `evaluations.trustyai.opendatahub.io`. See [Grant access to EvalHub](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.5/html/evaluating_ai_systems/evaluating-llms-with-evalhub_evaluate) (§2.29) |
 | EvalHub CR never becomes available | TrustyAI not Managed, CRD missing, or operator not reconciling | Confirm `trustyai.managementState: Managed`, `oc get crd evalhubs.trustyai.opendatahub.io`, `oc get pods -l app=eval-hub`, and TrustyAI operator logs |
