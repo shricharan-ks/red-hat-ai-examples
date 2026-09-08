@@ -382,11 +382,35 @@ Each completed scan creates an MLflow run containing:
 
 ### Viewing results in RHOAI
 
+Completed scans show up in two places in the dashboard: **Experiments**
+(grouped by `experiment.name`) and **Evaluations** (one entry per scan job).
+
+**Experiments**
+
 1. Open the RHOAI dashboard
-2. Navigate to **Develop and train** → **Experiments**
+2. Navigate to **Develop & train** → **Experiments**
 3. Select your project namespace from the **Project** dropdown
 4. Click the experiment name (e.g. `garak-red-teaming`)
 5. Each scan appears as a run with its metrics and tags
+
+**Evaluations**
+
+1. Navigate to **Develop & train** → **Evaluations**
+2. Click the scan name (e.g. `garak-quick-smoke-test`)
+3. The run page shows the benchmark verdict, the primary metric, the
+   benchmark threshold, and the per-probe metric breakdown
+
+![Garak run detail in the Evaluations tab](../images/evaluations-baseline-fail.png)
+
+> **Reading the score:** **Evaluation score** on the run page is the attack
+> success rate — **lower is better**. A run scoring 100% means every
+> adversarial prompt succeeded, and is marked **Fail** because the ASR exceeds
+> the benchmark threshold (0.3 by default).
+> **RHOAI 3.5:** the **Evaluations** menu item is a developer preview and is
+> hidden until you enable it with a per-session dashboard feature flag
+> override (`disableLMEval` unchecked, on the **Legacy** tab of
+> `/?devFeatureFlags`). It is GA in RHOAI 3.6. See
+> [Enable the Evaluations tab](../README.md#enable-the-evaluations-tab-in-the-rhoai-dashboard).
 
 ### Comparing baseline vs guardrailed scans
 
@@ -456,6 +480,7 @@ to see the ASR metrics side-by-side.
 
 | Symptom | Cause | Fix |
 |---|---|---|
+| **Evaluations** missing from the dashboard navigation | RHOAI 3.5 hides the dev-preview menu item, or the session override was reset | Re-apply the `disableLMEval` override via `/?devFeatureFlags`, or upgrade to RHOAI 3.6 where it is GA |
 | Scan completes but doesn't appear in Experiments | Missing `experiment` block in the scan submission | Resubmit the scan with an `experiment` block — results without it go to EvalHub only |
 | Experiment appears but has no runs | Scan is still running or failed before completion | Check scan status via the EvalHub API: `curl ... /api/v1/evaluations/jobs/${JOB_ID}` |
 | MLflow connection errors in sidecar logs | MLflow server unreachable from the job pod | Verify MLflow is running: `oc get pods -n redhat-ods-applications -l app=mlflow` |
