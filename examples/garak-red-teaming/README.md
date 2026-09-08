@@ -270,9 +270,10 @@ token. You do not set an MLflow password in this walkthrough.
 
 ### Enable the Evaluations tab in the RHOAI dashboard
 
-With EvalHub running the `garak` provider and `MLFLOW_TRACKING_URI` set on the
-CR, scan results become viewable from the **Evaluations** page under
-**Develop & train** in the RHOAI dashboard. On **RHOAI 3.5 that menu item is a
+Scan results are viewable from the **Evaluations** page under
+**Develop & train** in the RHOAI dashboard, which lists one entry per scan job.
+Making that page reachable is a dashboard-side setting, separate from the
+EvalHub and MLflow configuration above. On **RHOAI 3.5 the menu item is a
 developer preview** and is hidden by default — you turn it on with a dashboard
 feature flag override. On **RHOAI 3.6 the Evaluations menu is GA** and appears
 without any override, so skip this section on 3.6 and later.
@@ -518,10 +519,9 @@ the benchmark verdict, the primary metric, and the per-probe breakdown:
 
 ![Baseline Garak run in the Evaluations tab: 100% evaluation score, Quick benchmark failed](images/evaluations-baseline-fail.png)
 
-> **Reading the score:** **Evaluation score** on this page is the attack
-> success rate, so **lower is better**. The baseline run above scores 100% —
-> every DAN 11.0 prompt succeeded — and is marked **Fail** because the ASR
-> exceeds the benchmark threshold of 0.3.
+> **Reading the score:** the **Evaluation score** field on this page is the ASR
+> described above — so the 100% shown here means every DAN 11.0 prompt
+> succeeded, and the run is marked **Fail**.
 
 The **Overview** tab lists the logged metrics (`attack_success_rate` and each
 per-probe ASR, such as `dan.Dan_11_0_asr`), and **About this run** carries the
@@ -818,7 +818,7 @@ For mapping scan results to guardrails mitigations, see
 | `garak` missing from providers list | `garak` not listed in `spec.providers` | Edit the EvalHub CR to include `- garak` under `spec.providers`, then re-check `/api/v1/evaluations/providers` |
 | No **Evaluations** item in the dashboard navigation | On RHOAI 3.5 the menu is dev preview and off by default, or the session override was reset | Re-open the dashboard with `/?devFeatureFlags`, and on the **Legacy** tab leave `disableLMEval` unchecked. See [Enable the Evaluations tab](#enable-the-evaluations-tab-in-the-rhoai-dashboard). GA in RHOAI 3.6 — no override needed |
 | **Evaluations** disappears after reopening the dashboard | The feature flag override is per browser session, not cluster state | Re-apply the override, or upgrade to RHOAI 3.6 where the menu is GA |
-| Scan results not visible in RHOAI dashboard | Missing `experiment` block in the scan submission | Add an `experiment` block — without it, results are only available via the EvalHub API. See [MLflow Experiment Tracking](docs/scan-configuration.md#mlflow-experiment-tracking) |
+| Scan results missing from **Experiments** | Missing `experiment` block in the scan submission | Add an `experiment` block — without it, results are only available via the EvalHub API. See [MLflow Experiment Tracking](docs/scan-configuration.md#mlflow-experiment-tracking) |
 | Scan completes but Experiments is still empty | `MLFLOW_TRACKING_URI` missing or wrong on the EvalHub CR | Set `MLFLOW_TRACKING_URI` in `spec.env` to the in-cluster tracking URI. This is distinct from a missing job `experiment` block |
 | Agent unreachable from EvalHub | Network policy or wrong service URL | Test from inside the cluster: `oc exec <evalhub-pod> -- curl <agent-svc>:8080/health` |
 | Baseline scan timeouts after applying guardrails | Agent `BASE_URL` changed mid-scan; sidecar proxy times out on extra guardrails hop | Wait for baseline scan to complete before changing `BASE_URL` in Step 5. Use `quick` benchmark for fast iteration |
